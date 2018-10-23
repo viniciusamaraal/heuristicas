@@ -11,11 +11,12 @@ namespace Heuristicas
         public static void GerarDoisNumerosAleatoriosDiferentes(int menor, int maior, ref int valor1, ref int valor2)
         {
             var r = new Random();
-            
-            valor1 = r.Next(menor, maior);
-            valor2 = r.Next(menor, maior);
-            while (valor1 == valor2)
+
+            valor1 = valor2 = r.Next(menor, maior);
+            do
+            {
                 valor2 = r.Next(menor, maior);
+            } while (valor1 == valor2);
         }
     }
 }

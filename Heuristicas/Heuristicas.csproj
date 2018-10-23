@@ -44,6 +44,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Metaheuristicas\BuscaTabu.cs" />
+    <Compile Include="Constantes.cs" />
+    <Compile Include="Metaheuristicas\LAHC.cs" />
+    <Compile Include="Metaheuristicas\MetaHeuristicaBase.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Util.cs" />
