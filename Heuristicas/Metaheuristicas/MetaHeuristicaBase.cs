@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Heuristicas.Metaheuristicas
 {
     public abstract class MetaHeuristicaBase
     {
-        private string CaminhoBaseInstancias = "..\\..\\_instancias\\";
+        private string CaminhoBaseInstancias = ConfigurationManager.AppSettings["CAMINHO_BASE_INSTANCIAS"];
         private string Instancia { get; set; }
 
         internal Dictionary<int, List<int>> Grafo { get; set; }
@@ -25,9 +26,9 @@ namespace Heuristicas.Metaheuristicas
             this.Instancia = instancia;
 
             this.Grafo = new Dictionary<int, List<int>>();
-            this.MelhorSolucao = new int[this.NumeroVertices];
-
             CarregarInformacoesInstanciaSmall();
+
+            this.MelhorSolucao = new int[this.NumeroVertices];
         }
 
         /// <summary>
@@ -114,37 +115,31 @@ namespace Heuristicas.Metaheuristicas
         /// <returns> Retorna o número de cutdwith (maior número de arestas que transpassam um único vértice) </returns>
         protected int ExecutarFuncaoAvaliacao(int[] solucao)
         {
-            // Inicialização do dicionário que representa cada "corte" do arranjo linear formado pela solução (ex: [ 1_2, 2_3, 3_4, 4_5 ] para a solução de um grafo com 5 vértices)
-            var contadorLigacoesPosicoes = new Dictionary<string, int>();
+            var contadorLigacoesPosicoes = new Dictionary<string, int>(); // inicialização do dicionário que representa cada "corte" do arranjo linear formado pela solução
             for (int i = 0; i < solucao.Length - 1; i++)
                 contadorLigacoesPosicoes.Add(i + "_" + (i + 1), 0);
 
             for (int i = 0; i < solucao.Length - 1; i++)
             {
-                // Recupera a lista de vértices relacionados ao vétice da posição corrente (i) da solução
-                var ligacoesVertice = Grafo[solucao[i]];
+                var ligacoesVertice = Grafo[solucao[i]]; // recupera a lista de vértices relacionados ao vétice da posição corrente (i) da solução
                 foreach (int verticeRelacionado in ligacoesVertice)
                 {
-                    // Busca a posição do vértice relacionado
+                    // busca a posição do vértice relacionado
                     int posicaoVerticeRelacionado = -1;
                     for (int j = i + 1; j < solucao.Length && posicaoVerticeRelacionado == -1; j++)
                     {
                         if (solucao[j] == verticeRelacionado)
                             posicaoVerticeRelacionado = j;
                     }
-
-                    // Se o vértice relacionado está em alguma posição de índice maior que a posição atual da solução que está sendo avaliada...
-                    if (posicaoVerticeRelacionado > i)
-                    {
-                        // Incrementa o dicionário que representa cada corte passado, do vértice da posição atual (i) até o vértice relacionado (foreach)
-                        for (int j = i; j < posicaoVerticeRelacionado; j++)
+                    // se o vértice relacionado está em alguma posição de índice maior que a posição atual da solução que está sendo avaliada...
+                    if (posicaoVerticeRelacionado > i) 
+                    { 
+                        for (int j = i; j < posicaoVerticeRelacionado; j++) // incrementa o item do dicionário referente ao corte transpassado
                             contadorLigacoesPosicoes[j + "_" + (j + 1)] += 1;
                     }
                 }
             }
-
-            // Retorna o maior valor encontrado (cutwidth)
-            return contadorLigacoesPosicoes.Max(x => x.Value);
+            return contadorLigacoesPosicoes.Max(x => x.Value); // retorna o maior valor encontrado (cutwidth)
         }
     }
 }
