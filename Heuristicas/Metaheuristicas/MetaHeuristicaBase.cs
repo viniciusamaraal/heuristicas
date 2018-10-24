@@ -15,7 +15,8 @@ namespace Heuristicas.Metaheuristicas
 
         private bool LogAtivo { get; set; }
         private DateTime HorarioExcecucao { get; set; }
-        private string NomeArquivoLog { get; set; }
+        private string NomeArquivoLogExecucao { get; set; }
+        private string NomeArquivoLogGeral { get; set; }
         public string NomeHeuristica { get; set; }
 
         internal Dictionary<int, List<int>> Grafo { get; set; }
@@ -27,7 +28,7 @@ namespace Heuristicas.Metaheuristicas
 
         public abstract void ExecutarMetaheuristica();
 
-        public MetaHeuristicaBase(string instancia, string nomeHeuristica, bool logAtivo)
+        public MetaHeuristicaBase(string instancia, string nomeHeuristica, bool logAtivo, string arquivoLogGeral = null)
         {
             this.Instancia = instancia;
             this.NomeHeuristica = nomeHeuristica;
@@ -35,12 +36,13 @@ namespace Heuristicas.Metaheuristicas
 
             this.IteracoesMelhoraSolucaoGlobal = new List<int>();
             this.LogAtivo = logAtivo;
-            this.NomeArquivoLog = string.Format(ConfigurationManager.AppSettings["CAMINHO_ARQUIVO_LOG"], NomeHeuristica, "111");// HorarioExcecucao.ToString("yyyy-MM-dd-HHmmss"));
-            if (this.LogAtivo && File.Exists(this.NomeArquivoLog))
-                File.Delete(this.NomeArquivoLog);
+            this.NomeArquivoLogExecucao = string.Format(ConfigurationManager.AppSettings["CAMINHO_ARQUIVO_LOG_EXECUCAO"], NomeHeuristica, "111");// HorarioExcecucao.ToString("yyyy-MM-dd-HHmmss"));
+            if (this.LogAtivo && File.Exists(this.NomeArquivoLogExecucao))
+                File.Delete(this.NomeArquivoLogExecucao);
+            this.NomeArquivoLogGeral = arquivoLogGeral;
 
             this.Grafo = new Dictionary<int, List<int>>();
-            CarregarInformacoesInstanciaSmall();
+            CarregarInformacoesInstancia();
 
             this.MelhorSolucao = new int[this.NumeroVertices];
         }
@@ -48,9 +50,9 @@ namespace Heuristicas.Metaheuristicas
         /// <summary>
         /// Carrega os dados do grafo para a instâncias small
         /// </summary>
-        protected void CarregarInformacoesInstanciaSmall()
+        protected void CarregarInformacoesInstancia()
         {
-            string nomeArquivo = this.CaminhoBaseInstancias + "small\\" + Instancia;
+            string nomeArquivo = this.CaminhoBaseInstancias + Instancia;
 
             using (var leitorArquivo = new StreamReader(nomeArquivo))
             {
@@ -156,12 +158,21 @@ namespace Heuristicas.Metaheuristicas
             return contadorLigacoesPosicoes.Max(x => x.Value); // retorna o maior valor encontrado (cutwidth)
         }
 
-        protected void GravarLog(string logString)
+        protected void GravarLogDuranteExecucao(string logString)
         {
             if (this.LogAtivo)
             {
-                using (var escritorArquivo = new StreamWriter(this.NomeArquivoLog, true))
+                using (var escritorArquivo = new StreamWriter(this.NomeArquivoLogExecucao, true))
                     escritorArquivo.WriteLine(logString);
+            }
+        }
+
+        public void GravarArquivoLogGeral()
+        {
+            if (this.LogAtivo && !string.IsNullOrEmpty(this.NomeArquivoLogGeral))
+            {
+                using (var escritorArquivo = new StreamWriter(this.NomeArquivoLogGeral, true))
+                    escritorArquivo.WriteLine($"Instancia: { this.Instancia } - Cudtwidth: { FOMelhorSolucao } - Solução: { string.Join(" | ", MelhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) } ");
             }
         }
     }
