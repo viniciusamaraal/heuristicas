@@ -3,10 +3,48 @@ using System.Linq;
 
 namespace Heuristicas.Metaheuristicas
 {
-    public class RestricaoBuscaTabu
+    public class Restricao
     {
         public int IteracaoProibicao { get; set; }
-        public int FOSolucaoAtual { get; set; }
+        public int QuantidadeTrocas { get; set; }
+
+        public Restricao()
+        {
+            this.IteracaoProibicao = -1;
+            this.QuantidadeTrocas = 0;
+        }
+    }
+
+    public class EstruturaTabu
+    {
+        public Restricao[,] ListaRestricoes { get; set; }
+
+        public EstruturaTabu(int dimensao)
+        {
+            ListaRestricoes = new Restricao[dimensao, dimensao];
+
+            for (int i = 0; i < ListaRestricoes.GetLength(0); i++)
+            {
+                for (int j = 0; j < ListaRestricoes.GetLength(1); j++)
+                {
+                    ListaRestricoes[i, j] = new Restricao();
+                }
+            }
+        }
+        
+        public void DefinirTabu(int i, int j, int iteracaoProibicao)
+        {
+            ListaRestricoes[i, j].IteracaoProibicao = iteracaoProibicao;
+            ListaRestricoes[i, j].QuantidadeTrocas++;
+
+            ListaRestricoes[j, i].IteracaoProibicao = iteracaoProibicao;
+            ListaRestricoes[j, i].QuantidadeTrocas++;
+        }
+
+        public bool ElementoProibido(int i, int j, int iteracaoAtual)
+        {
+            return ListaRestricoes[i, j].IteracaoProibicao >= iteracaoAtual;
+        }
     }
 
     public class BuscaTabu : MetaHeuristicaBase
@@ -25,7 +63,7 @@ namespace Heuristicas.Metaheuristicas
         {
             int iterAtual = 0, melhorIter = 0, melhor_i = -1, melhor_j = -1, foSolucaoAtual = 0;
 
-            int[,] matrizTabu = new int[base.NumeroVertices, base.NumeroVertices];
+            var estruturaTabu = new EstruturaTabu(base.NumeroVertices);
 
             var solucaoAtual = GerarSolucaoInicial(); 
             Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
@@ -38,7 +76,7 @@ namespace Heuristicas.Metaheuristicas
             {
                 iterAtual++;
 
-                CalcularMelhorVizinho(solucaoAtual, iterAtual, matrizTabu, ref melhor_i, ref melhor_j, ref foSolucaoAtual);
+                CalcularMelhorVizinho(solucaoAtual, iterAtual, estruturaTabu, ref melhor_i, ref melhor_j, ref foSolucaoAtual);
 
                 // Troca os elementos de acordo com a melhor vizinhança retornada
                 int aux = solucaoAtual[melhor_i];
@@ -47,9 +85,7 @@ namespace Heuristicas.Metaheuristicas
 
                 GravarLog($"{ melhor_i.ToString().PadLeft(2, '0') }; { melhor_j.ToString().PadLeft(2, '0') }; { foSolucaoAtual.ToString().PadLeft(2, '0') }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
 
-                // Atualiza a matriz tabu com a nova restrição
-                matrizTabu[melhor_i, melhor_j] = iterAtual + this.NumeroIteracoesProibicaoLista;
-                matrizTabu[melhor_j, melhor_i] = iterAtual + this.NumeroIteracoesProibicaoLista;
+                estruturaTabu.DefinirTabu(melhor_i, melhor_j, iterAtual + this.NumeroIteracoesProibicaoLista);
 
                 if (foSolucaoAtual < FOMelhorSolucao)
                 {
@@ -63,10 +99,11 @@ namespace Heuristicas.Metaheuristicas
             }
 
             GravarLog($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
+            GravarLog($"Cutdwidth: { base.FOMelhorSolucao }");
             GravarLog($"Solução Final: {  string.Join(" | ", MelhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) }");
         }
 
-        private void CalcularMelhorVizinho(int[] solucaoAtual, int iteracaoAtual, int[,] matrizTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
+        private void CalcularMelhorVizinho(int[] solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
         {
             int aux;
             int foAtual = 0, foVizinho = 0;
@@ -87,7 +124,7 @@ namespace Heuristicas.Metaheuristicas
                     foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual);
 
                     // se a lista tabu não restringe o elemento ou, mesmo que haja restrição, o resultado da função objetivo encontrado no momento é melhor que a melhor solução (fo_star)
-                    if (foVizinho < FOMelhorSolucao || matrizTabu[i, j] < iteracaoAtual)
+                    if (foVizinho < FOMelhorSolucao || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
                     {
                         if (foVizinho < foSolucaoAtual)
                         {
