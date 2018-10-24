@@ -13,17 +13,31 @@ namespace Heuristicas.Metaheuristicas
         private string CaminhoBaseInstancias = ConfigurationManager.AppSettings["CAMINHO_BASE_INSTANCIAS"];
         private string Instancia { get; set; }
 
+        private bool LogAtivo { get; set; }
+        private DateTime HorarioExcecucao { get; set; }
+        private string NomeArquivoLog { get; set; }
+        public string NomeHeuristica { get; set; }
+
         internal Dictionary<int, List<int>> Grafo { get; set; }
         internal int NumeroVertices { get { return Grafo.Count; } }
 
         public int[] MelhorSolucao { get; set; }
         public int FOMelhorSolucao { get; set; }
+        public List<int> IteracoesMelhoraSolucaoGlobal { get; set; }
 
-        public abstract void ExecutarHeuristica();
+        public abstract void ExecutarMetaheuristica();
 
-        public MetaHeuristicaBase(string instancia)
+        public MetaHeuristicaBase(string instancia, string nomeHeuristica, bool logAtivo)
         {
             this.Instancia = instancia;
+            this.NomeHeuristica = nomeHeuristica;
+            this.HorarioExcecucao = DateTime.Now;
+
+            this.IteracoesMelhoraSolucaoGlobal = new List<int>();
+            this.LogAtivo = logAtivo;
+            this.NomeArquivoLog = string.Format(ConfigurationManager.AppSettings["CAMINHO_ARQUIVO_LOG"], NomeHeuristica, "111");// HorarioExcecucao.ToString("yyyy-MM-dd-HHmmss"));
+            if (this.LogAtivo && File.Exists(this.NomeArquivoLog))
+                File.Delete(this.NomeArquivoLog);
 
             this.Grafo = new Dictionary<int, List<int>>();
             CarregarInformacoesInstanciaSmall();
@@ -140,6 +154,15 @@ namespace Heuristicas.Metaheuristicas
                 }
             }
             return contadorLigacoesPosicoes.Max(x => x.Value); // retorna o maior valor encontrado (cutwidth)
+        }
+
+        protected void GravarLog(string logString)
+        {
+            if (this.LogAtivo)
+            {
+                using (var escritorArquivo = new StreamWriter(this.NomeArquivoLog, true))
+                    escritorArquivo.WriteLine(logString);
+            }
         }
     }
 }

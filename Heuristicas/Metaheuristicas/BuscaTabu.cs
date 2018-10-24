@@ -1,20 +1,27 @@
 ﻿using System;
+using System.Linq;
 
 namespace Heuristicas.Metaheuristicas
 {
+    public class RestricaoBuscaTabu
+    {
+        public int IteracaoProibicao { get; set; }
+        public int FOSolucaoAtual { get; set; }
+    }
+
     public class BuscaTabu : MetaHeuristicaBase
     {
         private int NumeroMaximoIteracoesSemMelhora { get; set; }
         private int NumeroIteracoesProibicaoLista { get; set; }
 
-        public BuscaTabu(string instancia, int numeroMaximoIteracoesSemMelhora, int numeroIteracoesProibicaoLista)
-            : base(instancia)
+        public BuscaTabu(string instancia, bool logAtivo, int numeroMaximoIteracoesSemMelhora, int numeroIteracoesProibicaoLista)
+            : base(instancia, Constantes.HeuristicasImplementadas.BuscaTabu, logAtivo)
         {
             this.NumeroMaximoIteracoesSemMelhora = numeroMaximoIteracoesSemMelhora;
             this.NumeroIteracoesProibicaoLista = numeroIteracoesProibicaoLista;
         }
 
-        public override void ExecutarHeuristica()
+        public override void ExecutarMetaheuristica()
         {
             int iterAtual = 0, melhorIter = 0, melhor_i = -1, melhor_j = -1, foSolucaoAtual = 0;
 
@@ -24,6 +31,8 @@ namespace Heuristicas.Metaheuristicas
             Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
 
             foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual);
+
+            GravarLog($"{ melhor_i }; { melhor_j }; { foSolucaoAtual }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }\n");
 
             while (iterAtual - melhorIter < this.NumeroMaximoIteracoesSemMelhora)
             {
@@ -36,6 +45,8 @@ namespace Heuristicas.Metaheuristicas
                 solucaoAtual[melhor_i] = solucaoAtual[melhor_j];
                 solucaoAtual[melhor_j] = aux;
 
+                GravarLog($"{ melhor_i.ToString().PadLeft(2, '0') }; { melhor_j.ToString().PadLeft(2, '0') }; { foSolucaoAtual.ToString().PadLeft(2, '0') }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
+
                 // Atualiza a matriz tabu com a nova restrição
                 matrizTabu[melhor_i, melhor_j] = iterAtual + this.NumeroIteracoesProibicaoLista;
                 matrizTabu[melhor_j, melhor_i] = iterAtual + this.NumeroIteracoesProibicaoLista;
@@ -46,8 +57,13 @@ namespace Heuristicas.Metaheuristicas
                     FOMelhorSolucao = foSolucaoAtual;
 
                     Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
+
+                    this.IteracoesMelhoraSolucaoGlobal.Add(iterAtual);
                 }
             }
+
+            GravarLog($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
+            GravarLog($"Solução Final: {  string.Join(" | ", MelhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) }");
         }
 
         private void CalcularMelhorVizinho(int[] solucaoAtual, int iteracaoAtual, int[,] matrizTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)

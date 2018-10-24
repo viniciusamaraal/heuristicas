@@ -11,8 +11,8 @@ namespace Heuristicas.Metaheuristicas
         private int MultiplicadorTamanhoMemoria { get; set; }
         private int NumeroMaximoRejeicoesConsecutivas { get; set; }
 
-        public LAHC(string instancia, int multiplicadorMemoria, int numeroMaximoRejeicoesConsecutivas)
-            :base (instancia)
+        public LAHC(string instancia, bool logAtivo, int multiplicadorMemoria, int numeroMaximoRejeicoesConsecutivas)
+            :base (instancia, Constantes.HeuristicasImplementadas.LAHC, logAtivo)
         {
             this.MultiplicadorTamanhoMemoria = multiplicadorMemoria;
             this.NumeroMaximoRejeicoesConsecutivas = NumeroMaximoRejeicoesConsecutivas;
@@ -28,7 +28,7 @@ namespace Heuristicas.Metaheuristicas
             return memoria;
         }
 
-        public override void ExecutarHeuristica()
+        public override void ExecutarMetaheuristica()
         {
             var solucaoAtual = GerarSolucaoInicial(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
             int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
@@ -67,6 +67,6 @@ namespace Heuristicas.Metaheuristicas
                 controleMemoria = (controleMemoria + 1) % (tamanhoMaximoMemoria - 1);
                 numeroRejeicoes++;
             }
-        }        
+        }
     }
 }

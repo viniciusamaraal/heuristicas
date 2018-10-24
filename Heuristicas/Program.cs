@@ -47,19 +47,20 @@ namespace Heuristicas
             switch (heuristica)
             {
                 case Constantes.HeuristicasImplementadas.LAHC:
-                    metaHeuristica = new LAHC(instancia, multiplicadorMemoriaLAHC, numeroMaximoRejeicoesLAHC);
+                    metaHeuristica = new LAHC(instancia, execucaoDebug, multiplicadorMemoriaLAHC, numeroMaximoRejeicoesLAHC);
                     break;
                 case Constantes.HeuristicasImplementadas.BuscaTabu:
-                    metaHeuristica = new BuscaTabu(instancia, numeroMaximoIteracoesSemMelhoraBT, numeroIteracoesProibicaoListaBT);
+                    metaHeuristica = new BuscaTabu(instancia, execucaoDebug, numeroMaximoIteracoesSemMelhoraBT, numeroIteracoesProibicaoListaBT);
                     break;
                 default:
                     throw new Exception("Heurística não implementada.");
             }
 
-            metaHeuristica.ExecutarHeuristica();
+            metaHeuristica.ExecutarMetaheuristica();
 
             if (execucaoDebug)
             {
+                Console.WriteLine("Meta-heurística executada: " + metaHeuristica.NomeHeuristica);
                 Console.WriteLine($"O valor encontrado para a melhor solução foi { metaHeuristica.FOMelhorSolucao }");
                 Console.WriteLine($"Organização dos componentes: [ | { string.Join(" | ", metaHeuristica.MelhorSolucao) } | ]");
 
