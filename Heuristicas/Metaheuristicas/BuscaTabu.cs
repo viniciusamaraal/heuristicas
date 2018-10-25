@@ -54,6 +54,9 @@ namespace Heuristicas.Metaheuristicas
         
         public int QuantidadeTrocas(int i, int j)
         {
+            if (i < 0 || j < 0)
+                return 0;
+
             return this.ListaRestricoes[i, j].QuantidadeTrocas;
         }
 
@@ -114,8 +117,8 @@ namespace Heuristicas.Metaheuristicas
         private int NumeroMaximoIteracoesSemMelhora { get; set; }
         private int NumeroIteracoesProibicaoLista { get; set; }
 
-        public BuscaTabu(string instancia, bool logAtivo, string arquivoLogGeral, double multiplicadorNumeroMaximoIteracoesSemMelhora, double multiplicadorNumeroIteracoesProibicaoLista)
-            : base(instancia, Constantes.HeuristicasImplementadas.BuscaTabu, logAtivo, arquivoLogGeral)
+        public BuscaTabu(string instancia, bool logAtivo, double multiplicadorNumeroMaximoIteracoesSemMelhora, double multiplicadorNumeroIteracoesProibicaoLista)
+            : base(instancia, Constantes.HeuristicasImplementadas.BuscaTabu, logAtivo)
         {
             this.NumeroMaximoIteracoesSemMelhora = (int)(base.NumeroVertices * multiplicadorNumeroMaximoIteracoesSemMelhora);
             this.NumeroIteracoesProibicaoLista = (int)(base.NumeroVertices * multiplicadorNumeroIteracoesProibicaoLista);
@@ -170,8 +173,6 @@ namespace Heuristicas.Metaheuristicas
 
         private void CalcularMelhorVizinho(int[] solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
         {
-            int teste = 1111; // apagar
-
             int aux;
             int foAtual = 0, foVizinho = 0;
 
@@ -193,7 +194,8 @@ namespace Heuristicas.Metaheuristicas
                     // se a lista tabu não restringe o elemento ou, mesmo que haja restrição, o resultado da função objetivo encontrado no momento é melhor que a melhor solução (fo_star)
                     if (foVizinho < FOMelhorSolucao || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
                     {
-                        if (foVizinho < foSolucaoAtual || (melhor_i >= 0 && melhor_j >= 0 && foVizinho == foSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j)))
+                        // Caso a nova solução melhore a solução atual ou seja igual à solução atual mas tenham sido feitas menos trocas
+                        if (foVizinho < foSolucaoAtual || (foVizinho == foSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j)))
                         {
                             melhor_i = i;
                             melhor_j = j;

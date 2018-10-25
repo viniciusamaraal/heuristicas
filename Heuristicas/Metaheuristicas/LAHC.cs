@@ -11,8 +11,8 @@ namespace Heuristicas.Metaheuristicas
         private int MultiplicadorTamanhoMemoria { get; set; }
         private int NumeroMaximoRejeicoesConsecutivas { get; set; }
 
-        public LAHC(string instancia, bool logAtivo, string arquivoLogGeral, int multiplicadorMemoria, int numeroMaximoRejeicoesConsecutivas)
-            :base (instancia, Constantes.HeuristicasImplementadas.LAHC, logAtivo, arquivoLogGeral)
+        public LAHC(string instancia, bool logAtivo, int multiplicadorMemoria, int numeroMaximoRejeicoesConsecutivas)
+            :base (instancia, Constantes.HeuristicasImplementadas.LAHC, logAtivo)
         {
             this.MultiplicadorTamanhoMemoria = multiplicadorMemoria;
             this.NumeroMaximoRejeicoesConsecutivas = NumeroMaximoRejeicoesConsecutivas;

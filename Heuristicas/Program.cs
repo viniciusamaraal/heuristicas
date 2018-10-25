@@ -13,6 +13,9 @@ namespace Heuristicas
         {
             bool execucaoDebug = true;
 
+            int quantidadeExcecucoes = 1;
+            var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
+
             // Declaração de variáveis e definição valores default
             var listaInstancias = new List<string>();
             string heuristica = Constantes.HeuristicasImplementadas.BuscaTabu;
@@ -49,7 +52,7 @@ namespace Heuristicas
             }
             else
             {
-                listaInstancias.Add("p31_18_21"); // TODO: remover (apenas teste)
+                listaInstancias.Add("p50_19_25"); // TODO: remover (apenas teste)
 
                 if (!listaInstancias.Any())
                 {
@@ -59,7 +62,7 @@ namespace Heuristicas
 
                     foreach (FileInfo arquivo in arquivosDiretorio)
                     {
-                        if (arquivo.Name != "p100_24_34" && listaInstancias.Count < 10) // TODO: remover (apenas teste)
+                        //if (arquivo.Name != "p100_24_34" && listaInstancias.Count < 5) // TODO: remover (apenas teste)
                             listaInstancias.Add(arquivo.Name);
                     }
                     
@@ -67,28 +70,32 @@ namespace Heuristicas
                 }
             }
 
-            string arquivoLogGeral = string.Format(ConfigurationManager.AppSettings["CAMINHO_ARQUIVO_LOG_GERAL"]);
-            if (File.Exists(arquivoLogGeral))
-                File.Delete(arquivoLogGeral);
-
             foreach (var instancia in listaInstancias)
             {
-                switch (heuristica)
-                {
-                    case Constantes.HeuristicasImplementadas.LAHC:
-                        metaHeuristica = new LAHC(instancia, execucaoDebug, arquivoLogGeral, multiplicadorMemoriaLAHC, numeroMaximoRejeicoesLAHC);
-                        break;
-                    case Constantes.HeuristicasImplementadas.BuscaTabu:
-                        metaHeuristica = new BuscaTabu(instancia, execucaoDebug, arquivoLogGeral, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT);
-                        break;
-                    default:
-                        throw new Exception("Heurística não implementada.");
-                }
+                informacoesExecucaoInstancias.Add(instancia, new List<MetaHeuristicaBase>());
 
-                metaHeuristica.ExecutarMetaheuristica();
-                metaHeuristica.GravarArquivoLogGeral();
+                for (int i = 0; i < quantidadeExcecucoes; i++)
+                {
+                    switch (heuristica)
+                    {
+                        case Constantes.HeuristicasImplementadas.LAHC:
+                            metaHeuristica = new LAHC(instancia, execucaoDebug, multiplicadorMemoriaLAHC, numeroMaximoRejeicoesLAHC);
+                            break;
+                        case Constantes.HeuristicasImplementadas.BuscaTabu:
+                            metaHeuristica = new BuscaTabu(instancia, execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT);
+                            break;
+                        default:
+                            throw new Exception("Heurística não implementada.");
+                    }
+
+                    metaHeuristica.ExecutarMetaheuristica();
+
+                    informacoesExecucaoInstancias[instancia].Add(metaHeuristica);
+                }
             }
-            
+
+            GravarLogGeral(informacoesExecucaoInstancias);
+
             if (listaInstancias.Count == 1)
             {
                 if (execucaoDebug)
@@ -103,6 +110,25 @@ namespace Heuristicas
                 else
                 {
                     Console.Write(metaHeuristica.FOMelhorSolucao);
+                }
+            }
+        }
+
+        static void GravarLogGeral(Dictionary<string, List<MetaHeuristicaBase>> informacoesExecucaoInstancias)
+        {
+            string arquivoLogGeral = string.Format(ConfigurationManager.AppSettings["CAMINHO_ARQUIVO_LOG_GERAL"]);
+            if (File.Exists(arquivoLogGeral))
+                File.Delete(arquivoLogGeral);
+
+            using (var escritorArquivo = new StreamWriter(arquivoLogGeral))
+            {
+                escritorArquivo.WriteLine("Instância\t Cut\t Avg");
+                foreach (var instancia in informacoesExecucaoInstancias)
+                {
+                    int menorCutwidth = instancia.Value.Min(x => x.FOMelhorSolucao);
+                    double mediaCutwidth = instancia.Value.Average(x => x.FOMelhorSolucao);
+
+                    escritorArquivo.WriteLine($"{ instancia.Value.First().Instancia }\t { menorCutwidth }\t\t { mediaCutwidth } ");
                 }
             }
         }
