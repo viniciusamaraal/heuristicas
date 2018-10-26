@@ -13,7 +13,7 @@ namespace Heuristicas
         {
             bool execucaoDebug = true;
 
-            int quantidadeExcecucoes = 1;
+            int quantidadeExcecucoes = 3;
             var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
 
             // Declaração de variáveis e definição valores default
@@ -23,8 +23,8 @@ namespace Heuristicas
             int multiplicadorMemoriaLAHC = 100;
             int numeroMaximoRejeicoesLAHC = 10000;
 
-            double multiplicadorIteracoesSemMelhoraBT = 20; // multiplicado pelo número de vértices do grafo
-            double multiplicadorIteracoesProibicaoListaBT = 1; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesSemMelhoraBT = 50; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesProibicaoListaBT = 0.5 ; // multiplicado pelo número de vértices do grafo
 
             MetaHeuristicaBase metaHeuristica = null;
 
@@ -52,7 +52,22 @@ namespace Heuristicas
             }
             else
             {
-                listaInstancias.Add("p50_19_25"); // TODO: remover (apenas teste)
+                //listaInstancias.Add("p38_18_19");
+
+                //listaInstancias.Add("p31_18_21");
+                //listaInstancias.Add("p37_18_20");
+                //istaInstancias.Add("p50_19_25");
+                //listaInstancias.Add("p55_20_24");
+                //listaInstancias.Add("p58_20_21");
+                //listaInstancias.Add("p64_21_22");
+                //listaInstancias.Add("p67_21_22");
+                //listaInstancias.Add("p82_23_24");
+                //listaInstancias.Add("p83_23_24");
+                //listaInstancias.Add("p92_24_26");
+                //listaInstancias.Add("p93_24_27");
+                //listaInstancias.Add("p95_24_27");
+                //listaInstancias.Add("p97_24_26");
+                //listaInstancias.Add("p98_24_29");
 
                 if (!listaInstancias.Any())
                 {

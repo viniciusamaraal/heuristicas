@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Heuristicas.Metaheuristicas
@@ -7,22 +8,24 @@ namespace Heuristicas.Metaheuristicas
     {
         public int IteracaoProibicao { get; set; }
         public int QuantidadeIteracoesProibicao { get; set; }
-        public int QuantidadeTrocas { get; set; }
+        public List<int> Visitas { get; set; }
 
         public Restricao()
         {
             this.IteracaoProibicao = -1;
-            this.QuantidadeTrocas = 0;
+            this.Visitas = new List<int>();
         }
     }
 
     public class EstruturaTabu
     {
+        private int QuantidadeIteracoesProibicaoOriginal { get; set; }
         private int QuantidadeIteracoesPriobicao { get; set; }
         private Restricao[,] ListaRestricoes { get; set; }
 
         public EstruturaTabu(int dimensao, int qtdIteracoesProibicao)
         {
+            this.QuantidadeIteracoesProibicaoOriginal = qtdIteracoesProibicao;
             this.QuantidadeIteracoesPriobicao = qtdIteracoesProibicao;
 
             ListaRestricoes = new Restricao[dimensao, dimensao];
@@ -35,16 +38,26 @@ namespace Heuristicas.Metaheuristicas
                 }
             }
         }
+
+        public void IncrementarTamanhoLista()
+        {
+            this.QuantidadeIteracoesPriobicao += 5;
+        }
+
+        public void ResetarTamanhoLista()
+        {
+            this.QuantidadeIteracoesPriobicao = this.QuantidadeIteracoesProibicaoOriginal;
+        }
         
         public void DefinirTabu(int i, int j, int iteracaoProibicao)
         {
             ListaRestricoes[i, j].IteracaoProibicao = iteracaoProibicao + this.QuantidadeIteracoesPriobicao;
             ListaRestricoes[i, j].QuantidadeIteracoesProibicao += this.QuantidadeIteracoesPriobicao;
-            ListaRestricoes[i, j].QuantidadeTrocas++;
+            ListaRestricoes[i, j].Visitas.Add(iteracaoProibicao);
 
             ListaRestricoes[j, i].IteracaoProibicao = iteracaoProibicao + this.QuantidadeIteracoesPriobicao;
             ListaRestricoes[j, i].QuantidadeIteracoesProibicao += this.QuantidadeIteracoesPriobicao;
-            ListaRestricoes[j, i].QuantidadeTrocas++;
+            ListaRestricoes[j, i].Visitas.Add(iteracaoProibicao);
         }
 
         public bool ElementoProibido(int i, int j, int iteracaoAtual)
@@ -57,7 +70,7 @@ namespace Heuristicas.Metaheuristicas
             if (i < 0 || j < 0)
                 return 0;
 
-            return this.ListaRestricoes[i, j].QuantidadeTrocas;
+            return this.ListaRestricoes[i, j].Visitas.Count;
         }
 
         public void ImprimirTrocasListaTabu()
@@ -67,7 +80,7 @@ namespace Heuristicas.Metaheuristicas
 
             Console.Write("     ");
             for (int i = 0; i < ListaRestricoes.GetLength(0); i++)
-                Console.Write($" { i.ToString().PadLeft(3, '0') } ");
+                Console.Write($" { (i + 1).ToString().PadLeft(3, '0') } ");
 
             Console.ResetColor();
             
@@ -75,11 +88,21 @@ namespace Heuristicas.Metaheuristicas
             {
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write($" { i.ToString().PadLeft(3, '0') } ");
+                Console.Write($" { (i + 1).ToString().PadLeft(3, '0') } ");
                 Console.ResetColor();
 
                 for (int j = 0; j < ListaRestricoes.GetLength(1); j++)
-                    Console.Write($" { ListaRestricoes[i, j].QuantidadeTrocas.ToString().PadLeft(3, '0') } ");
+                {
+                    int qtdTrocas = QuantidadeTrocas(i, j);
+
+                    if (qtdTrocas == 0)
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+
+                    Console.Write($" { qtdTrocas.ToString().PadLeft(3, '0') } ");
+
+                    if (qtdTrocas == 0)
+                        Console.ResetColor();
+                }
             }
 
             Console.WriteLine("\n");
@@ -92,7 +115,7 @@ namespace Heuristicas.Metaheuristicas
 
             Console.Write("     ");
             for (int i = 0; i < ListaRestricoes.GetLength(0); i++)
-                Console.Write($" { i.ToString().PadLeft(3, '0') } ");
+                Console.Write($" { (i + 1).ToString().PadLeft(3, '0') } ");
 
             Console.ResetColor();
 
@@ -100,11 +123,19 @@ namespace Heuristicas.Metaheuristicas
             {
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write($" { i.ToString().PadLeft(3, '0') } ");
+                Console.Write($" { (i + 1).ToString().PadLeft(3, '0') } ");
                 Console.ResetColor();
 
                 for (int j = 0; j < ListaRestricoes.GetLength(1); j++)
+                {
+                    if (ListaRestricoes[i, j].QuantidadeIteracoesProibicao == 0)
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+
                     Console.Write($" { ListaRestricoes[i, j].QuantidadeIteracoesProibicao.ToString().PadLeft(3, '0') } ");
+
+                    if (ListaRestricoes[i, j].QuantidadeIteracoesProibicao == 0)
+                        Console.ResetColor();
+                }
             }
 
             Console.WriteLine("\n");
@@ -130,7 +161,7 @@ namespace Heuristicas.Metaheuristicas
 
             var estruturaTabu = new EstruturaTabu(base.NumeroVertices, this.NumeroIteracoesProibicaoLista);
 
-            var solucaoAtual = GerarSolucaoInicial(); 
+            var solucaoAtual = GerarSolucaoInicial(); // new int[] { 2, 6, 15, 1, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
             Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
 
             foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual);
@@ -160,6 +191,13 @@ namespace Heuristicas.Metaheuristicas
                     Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
 
                     this.IteracoesMelhoraSolucaoGlobal.Add(iterAtual);
+
+                    estruturaTabu.ResetarTamanhoLista();
+                }
+                else
+                {
+                    if ((iterAtual - melhorIter) % 50 == 0)
+                        estruturaTabu.IncrementarTamanhoLista();
                 }
             }
 
@@ -175,6 +213,7 @@ namespace Heuristicas.Metaheuristicas
         {
             int aux;
             int foAtual = 0, foVizinho = 0;
+            var listaCandidatos = new List<Tuple<int, int>>();
 
             foSolucaoAtual = int.MaxValue;
 
@@ -195,20 +234,74 @@ namespace Heuristicas.Metaheuristicas
                     if (foVizinho < FOMelhorSolucao || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
                     {
                         // Caso a nova solução melhore a solução atual ou seja igual à solução atual mas tenham sido feitas menos trocas
-                        if (foVizinho < foSolucaoAtual || (foVizinho == foSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j)))
+                        if (foVizinho < foSolucaoAtual)
                         {
-                            melhor_i = i;
-                            melhor_j = j;
+                            listaCandidatos = new List<Tuple<int, int>>();
+                            listaCandidatos.Add(Tuple.Create<int, int>(i, j));
                             foSolucaoAtual = foVizinho;
                         }
-                    }
 
+                        if (foVizinho == foSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j))
+                            listaCandidatos.Add(Tuple.Create<int, int>(i, j));
+                    }
+                    
                     // Desfaz o movimento de troca para analisar o restante da vizinhança
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
                 }
             }
+
+            // Dentre os melhores candidatos disponíveis, escolhe-se aleatoriamente algum deles
+            int escolhaAleatoria = new Random().Next(0, listaCandidatos.Count);
+            melhor_i = listaCandidatos[escolhaAleatoria].Item1;
+            melhor_j = listaCandidatos[escolhaAleatoria].Item2;
+        }
+
+        private int[] GerarSolucaoInicial()
+        {
+            var solucaoInicial = new int[NumeroVertices];
+            List<int> elementoInserido = new List<int>();
+            int i = 0, posicaoVertice;
+
+            var novoGravo = Grafo.OrderByDescending(x => x.Value.Count);
+            foreach (var vertice in novoGravo)
+            {
+                if (!elementoInserido.Contains(vertice.Key))
+                {
+                    var verticesLigadosNaoInseridos = vertice.Value.Where(x => !elementoInserido.Contains(x)).OrderBy(x => Grafo[x].Count).ToList();
+
+                    posicaoVertice = i + (verticesLigadosNaoInseridos.Count / 2);
+                    if (posicaoVertice == 0)
+                    {
+                        solucaoInicial[i] = vertice.Key;
+                        i++;
+                    }
+                    
+                    
+                    int k = 0;
+                    int l = i + verticesLigadosNaoInseridos.Count + 1;
+                    for (int j = i; j < l; j++)
+                    {
+                        if (j == posicaoVertice)
+                        {
+                            solucaoInicial[i] = vertice.Key;
+                            elementoInserido.Add(vertice.Key);
+                        }
+                        else
+                        {
+                            solucaoInicial[i] = verticesLigadosNaoInseridos[k];
+                            elementoInserido.Add(verticesLigadosNaoInseridos[k]);
+                            k++;
+                        }
+
+                        i++;
+                    }
+                }
+            }
+            
+
+            return solucaoInicial;
         }
     }
 }

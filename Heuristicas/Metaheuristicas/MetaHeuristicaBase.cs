@@ -78,9 +78,9 @@ namespace Heuristicas.Metaheuristicas
         /// Gera uma solução aleatória qualquer de acordo com o número de vértices do grafo.
         /// </summary>
         /// <returns> Retorna uma solução aleatória qualquer. </returns>
-        protected int[] GerarSolucaoInicial()
+        protected int[] GerarSolucaoAleatoria()
         {
-            var solucaoInicial = new int[NumeroVertices];
+            var solucao = new int[NumeroVertices];
 
             var r = new Random();
 
@@ -88,38 +88,26 @@ namespace Heuristicas.Metaheuristicas
             for (int i = 1; i <= NumeroVertices; i++)
             {
                 // Gera uma posição para o vértice da iteração corrente no vetor de solução inicial
-                int posicaoAleatoria = r.Next(0, solucaoInicial.Length);
+                int posicaoAleatoria = r.Next(0, solucao.Length);
 
                 // Se a posição já possui algum elemento, gera um novo índice até que uma posição vazia seja encontrada
-                while (solucaoInicial[posicaoAleatoria] != 0)
-                    posicaoAleatoria = r.Next(0, solucaoInicial.Length);
+                while (solucao[posicaoAleatoria] != 0)
+                    posicaoAleatoria = r.Next(0, solucao.Length);
 
-                solucaoInicial[posicaoAleatoria] = i;
+                solucao[posicaoAleatoria] = i;
             }
 
-            return solucaoInicial;
+            return solucao;
         }
 
-        /// <summary>
-        /// Executa movimento vizinho aleatório
-        /// </summary>
-        /// <param name="solucaoAtual"> Solução que será modificada pelo movimento </param>
-        /// <returns> Retorna um vetor contendo a nova solução após a execução do movimento </returns>
-        protected int[] ExecutarMovimento(int[] solucaoAtual)
+        protected int[] GerarSolucaoSequencial()
         {
-            var r = new Random();
+            var solucao = new int[NumeroVertices];
 
-            // Gera duas posições diferentes de modo aleatório
-            int posicao1 = -1, posicao2 = -1;
-            Util.GerarDoisNumerosAleatoriosDiferentes(0, solucaoAtual.Length, ref posicao1, ref posicao2);
+            for (int i = 0; i < solucao.Length; i++)
+                solucao[i] = i + 1;
 
-            // Realiza a troca de posições de acordo com os índices gerados
-            int[] solucaoVizinha = (int[])solucaoAtual.Clone();
-            int posicaoAux = solucaoVizinha[posicao1];
-            solucaoVizinha[posicao1] = solucaoVizinha[posicao2];
-            solucaoVizinha[posicao2] = posicaoAux;
-
-            return solucaoVizinha;
+            return solucao;
         }
 
         /// <summary>

@@ -28,9 +28,31 @@ namespace Heuristicas.Metaheuristicas
             return memoria;
         }
 
+        /// <summary>
+        /// Executa movimento vizinho aleatório
+        /// </summary>
+        /// <param name="solucaoAtual"> Solução que será modificada pelo movimento </param>
+        /// <returns> Retorna um vetor contendo a nova solução após a execução do movimento </returns>
+        private int[] ExecutarMovimento(int[] solucaoAtual)
+        {
+            var r = new Random();
+
+            // Gera duas posições diferentes de modo aleatório
+            int posicao1 = -1, posicao2 = -1;
+            Util.GerarDoisNumerosAleatoriosDiferentes(0, solucaoAtual.Length, ref posicao1, ref posicao2);
+
+            // Realiza a troca de posições de acordo com os índices gerados
+            int[] solucaoVizinha = (int[])solucaoAtual.Clone();
+            int posicaoAux = solucaoVizinha[posicao1];
+            solucaoVizinha[posicao1] = solucaoVizinha[posicao2];
+            solucaoVizinha[posicao2] = posicaoAux;
+
+            return solucaoVizinha;
+        }
+
         public override void ExecutarMetaheuristica()
         {
-            var solucaoAtual = GerarSolucaoInicial(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
+            var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
             int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
 
             MelhorSolucao = (int[])solucaoAtual.Clone();
