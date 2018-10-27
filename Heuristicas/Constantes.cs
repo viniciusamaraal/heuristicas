@@ -12,6 +12,7 @@ namespace Heuristicas
         {
             public const string LAHC = "LAHC";
             public const string BuscaTabu = "BUSCA_TABU";
+            public const string ILS = "ILS";
         }
     }
 }

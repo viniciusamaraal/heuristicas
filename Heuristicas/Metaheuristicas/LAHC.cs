@@ -8,14 +8,14 @@ namespace Heuristicas.Metaheuristicas
 {
     public class LAHC : MetaHeuristicaBase
     {
-        private int MultiplicadorTamanhoMemoria { get; set; }
+        private int TamanhoMemoria { get; set; }
         private int NumeroMaximoRejeicoesConsecutivas { get; set; }
 
-        public LAHC(string instancia, bool logAtivo, int multiplicadorMemoria, int numeroMaximoRejeicoesConsecutivas)
+        public LAHC(string instancia, bool logAtivo, double numeroMaximoRejeicoesConsecutivas, double multiplicadorTamanhoMemoria)
             :base (instancia, Constantes.HeuristicasImplementadas.LAHC, logAtivo)
         {
-            this.MultiplicadorTamanhoMemoria = multiplicadorMemoria;
-            this.NumeroMaximoRejeicoesConsecutivas = NumeroMaximoRejeicoesConsecutivas;
+            this.NumeroMaximoRejeicoesConsecutivas = (int)(base.NumeroVertices * numeroMaximoRejeicoesConsecutivas); ;
+            this.TamanhoMemoria = (int)(base.NumeroVertices * multiplicadorTamanhoMemoria);
         }
 
         private int[] CriarMemoria(int foSolucaoInicial, int tamanhoMemoria)
@@ -50,45 +50,47 @@ namespace Heuristicas.Metaheuristicas
             return solucaoVizinha;
         }
 
-        public override void ExecutarMetaheuristica()
+        public override Task ExecutarMetaheuristica()
         {
-            var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
-            int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
-
-            MelhorSolucao = (int[])solucaoAtual.Clone();
-            FOMelhorSolucao = foSolucaoAtual;
-
-            int qtdVertices = Grafo.Count;
-            int controleMemoria = 0;
-            int tamanhoMaximoMemoria = qtdVertices * this.MultiplicadorTamanhoMemoria;
-
-            var memoria = CriarMemoria(foSolucaoAtual, tamanhoMaximoMemoria);
-
-            int numeroRejeicoes = 0;
-            while (numeroRejeicoes < this.NumeroMaximoRejeicoesConsecutivas)
+            return Task.Factory.StartNew(() =>
             {
-                var solucaoVizinha = ExecutarMovimento(solucaoAtual);
-                int foSolucaoVizinha = ExecutarFuncaoAvaliacao(solucaoVizinha);
+                var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
+                int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
 
-                if (foSolucaoVizinha < foSolucaoAtual || foSolucaoVizinha < memoria[controleMemoria])
+                MelhorSolucao = (int[])solucaoAtual.Clone();
+                FOMelhorSolucao = foSolucaoAtual;
+
+                int qtdVertices = Grafo.Count;
+                int controleMemoria = 0;
+
+                var memoria = CriarMemoria(foSolucaoAtual, this.TamanhoMemoria);
+
+                int numeroRejeicoes = 0;
+                while (numeroRejeicoes < this.NumeroMaximoRejeicoesConsecutivas)
                 {
-                    if (foSolucaoVizinha < foSolucaoAtual)
-                        numeroRejeicoes = 0;
+                    var solucaoVizinha = ExecutarMovimento(solucaoAtual);
+                    int foSolucaoVizinha = ExecutarFuncaoAvaliacao(solucaoVizinha);
 
-                    solucaoAtual = (int[])solucaoVizinha.Clone();
-                    foSolucaoAtual = foSolucaoVizinha;
-
-                    if (foSolucaoVizinha < FOMelhorSolucao)
+                    if (foSolucaoVizinha < foSolucaoAtual || foSolucaoVizinha < memoria[controleMemoria])
                     {
-                        FOMelhorSolucao = foSolucaoVizinha;
-                        MelhorSolucao = (int[])solucaoVizinha.Clone();
-                    }
-                }
+                        if (foSolucaoVizinha < foSolucaoAtual)
+                            numeroRejeicoes = 0;
 
-                memoria[controleMemoria] = foSolucaoAtual;
-                controleMemoria = (controleMemoria + 1) % (tamanhoMaximoMemoria - 1);
-                numeroRejeicoes++;
-            }
+                        solucaoAtual = (int[])solucaoVizinha.Clone();
+                        foSolucaoAtual = foSolucaoVizinha;
+
+                        if (foSolucaoVizinha < FOMelhorSolucao)
+                        {
+                            FOMelhorSolucao = foSolucaoVizinha;
+                            MelhorSolucao = (int[])solucaoVizinha.Clone();
+                        }
+                    }
+
+                    memoria[controleMemoria] = foSolucaoAtual;
+                    controleMemoria = (controleMemoria + 1) % (this.TamanhoMemoria - 1);
+                    numeroRejeicoes++;
+                }
+            });
         }
     }
 }

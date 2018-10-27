@@ -25,7 +25,7 @@ namespace Heuristicas.Metaheuristicas
         public int FOMelhorSolucao { get; set; }
         public List<int> IteracoesMelhoraSolucaoGlobal { get; set; }
 
-        public abstract void ExecutarMetaheuristica();
+        public abstract Task ExecutarMetaheuristica();
 
         public MetaHeuristicaBase(string instancia, string nomeHeuristica, bool logAtivo)
         {

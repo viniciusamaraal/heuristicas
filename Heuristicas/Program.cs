@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Heuristicas
 {
@@ -11,20 +12,30 @@ namespace Heuristicas
     {
         static void Main(string[] args)
         {
+            Execucao(args).Wait();
+        }
+
+        static async Task Execucao(string[] args)
+        {
             bool execucaoDebug = true;
 
-            int quantidadeExcecucoes = 3;
+            int quantidadeExcecucoes = 10;
+            int quantidadeExecucoesSimultaneas = 8;
+            execucaoDebug = quantidadeExecucoesSimultaneas > 1 ? false : execucaoDebug;
             var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
 
             // Declaração de variáveis e definição valores default
             var listaInstancias = new List<string>();
             string heuristica = Constantes.HeuristicasImplementadas.BuscaTabu;
 
-            int multiplicadorMemoriaLAHC = 100;
-            int numeroMaximoRejeicoesLAHC = 10000;
+            double multiplicadorNumeroMaximoRejeicoesLAHC = 10000;
+            double multiplicadorTamanhoMemoriaLAHC = 100;
 
             double multiplicadorIteracoesSemMelhoraBT = 50; // multiplicado pelo número de vértices do grafo
-            double multiplicadorIteracoesProibicaoListaBT = 0.5 ; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
+
+            double multiplicadorNumeroMaximoIteracoesSemMelhoraILS = 1000; // multiplicado pelo número de vértices do grafo
+            double divisorNumeroMaximoIteracoesMesmoNivelILS = 5; // dividido pelo número máximo aceitável de execuções sem melhora
 
             MetaHeuristicaBase metaHeuristica = null;
 
@@ -37,12 +48,16 @@ namespace Heuristicas
                 switch (heuristica)
                 {
                     case Constantes.HeuristicasImplementadas.LAHC:
-                        multiplicadorMemoriaLAHC = int.Parse(args[2]);
-                        numeroMaximoRejeicoesLAHC = int.Parse(args[3]);
+                        multiplicadorTamanhoMemoriaLAHC = double.Parse(args[2]);
+                        multiplicadorNumeroMaximoRejeicoesLAHC = double.Parse(args[3]);
                         break;
                     case Constantes.HeuristicasImplementadas.BuscaTabu:
-                        multiplicadorIteracoesSemMelhoraBT = int.Parse(args[2]);
-                        multiplicadorIteracoesProibicaoListaBT = int.Parse(args[3]);
+                        multiplicadorIteracoesSemMelhoraBT = double.Parse(args[2]);
+                        multiplicadorIteracoesProibicaoListaBT = double.Parse(args[3]);
+                        break;
+                    case Constantes.HeuristicasImplementadas.ILS:
+                        multiplicadorNumeroMaximoIteracoesSemMelhoraILS = double.Parse(args[2]);
+                        divisorNumeroMaximoIteracoesMesmoNivelILS = double.Parse(args[3]);
                         break;
                     default:
                         throw new Exception("Heurística não implementada.");
@@ -52,14 +67,12 @@ namespace Heuristicas
             }
             else
             {
-                //listaInstancias.Add("p38_18_19");
-
-                //listaInstancias.Add("p31_18_21");
-                //listaInstancias.Add("p37_18_20");
-                //istaInstancias.Add("p50_19_25");
-                //listaInstancias.Add("p55_20_24");
-                //listaInstancias.Add("p58_20_21");
-                //listaInstancias.Add("p64_21_22");
+                listaInstancias.Add("p31_18_21");
+                listaInstancias.Add("p37_18_20");
+                listaInstancias.Add("p50_19_25");
+                listaInstancias.Add("p55_20_24");
+                listaInstancias.Add("p58_20_21");
+                listaInstancias.Add("p64_21_22");
                 //listaInstancias.Add("p67_21_22");
                 //listaInstancias.Add("p82_23_24");
                 //listaInstancias.Add("p83_23_24");
@@ -78,44 +91,67 @@ namespace Heuristicas
                     foreach (FileInfo arquivo in arquivosDiretorio)
                     {
                         //if (arquivo.Name != "p100_24_34" && listaInstancias.Count < 5) // TODO: remover (apenas teste)
-                            listaInstancias.Add(arquivo.Name);
+                        listaInstancias.Add(arquivo.Name);
                     }
-                    
+
                     listaInstancias = listaInstancias.OrderBy(x => x).ToList();
                 }
             }
 
-            foreach (var instancia in listaInstancias)
+            for (int i = 0; i < quantidadeExcecucoes; i++)
             {
-                informacoesExecucaoInstancias.Add(instancia, new List<MetaHeuristicaBase>());
-
-                for (int i = 0; i < quantidadeExcecucoes; i++)
+                for (int j = 0; j < listaInstancias.Count; j += quantidadeExecucoesSimultaneas)
                 {
-                    switch (heuristica)
+                    var tarefas = new Task[quantidadeExecucoesSimultaneas];
+
+                    for (int k = j; k < j + quantidadeExecucoesSimultaneas && k < listaInstancias.Count; k++)
                     {
-                        case Constantes.HeuristicasImplementadas.LAHC:
-                            metaHeuristica = new LAHC(instancia, execucaoDebug, multiplicadorMemoriaLAHC, numeroMaximoRejeicoesLAHC);
-                            break;
-                        case Constantes.HeuristicasImplementadas.BuscaTabu:
-                            metaHeuristica = new BuscaTabu(instancia, execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT);
-                            break;
-                        default:
-                            throw new Exception("Heurística não implementada.");
+                        if (!informacoesExecucaoInstancias.ContainsKey(listaInstancias[k]))
+                            informacoesExecucaoInstancias.Add(listaInstancias[k], new List<MetaHeuristicaBase>());
+
+                        Console.WriteLine($"Tentativa de execução da instancia [{ listaInstancias[k] }] pela [{ i + 1 }ª] vez às [{ DateTime.Now.ToString("HH:mm:ss") }]...\n");
+                        switch (heuristica)
+                        {
+                            case Constantes.HeuristicasImplementadas.LAHC:
+                                metaHeuristica = new LAHC(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoRejeicoesLAHC, multiplicadorTamanhoMemoriaLAHC);
+                                break;
+                            case Constantes.HeuristicasImplementadas.BuscaTabu:
+                                metaHeuristica = new BuscaTabu(listaInstancias[k], execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT);
+                                break;
+                            case Constantes.HeuristicasImplementadas.ILS:
+                                metaHeuristica = new ILS(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoIteracoesSemMelhoraILS, divisorNumeroMaximoIteracoesMesmoNivelILS);
+                                break;
+                            default:
+                                throw new Exception("Heurística não implementada.");
+                        }
+
+                        informacoesExecucaoInstancias[listaInstancias[k]].Add(metaHeuristica);
+
+                        tarefas[k - j] = metaHeuristica.ExecutarMetaheuristica();
                     }
 
-                    metaHeuristica.ExecutarMetaheuristica();
+                    int qtdTarefasProcessarAgora = tarefas.Where(x => x != null).Count();
 
-                    informacoesExecucaoInstancias[instancia].Add(metaHeuristica);
+                    if (qtdTarefasProcessarAgora == tarefas.Length)
+                        await Task.WhenAll(tarefas);
+                    else
+                    {
+                        // Caso o número de tarefas a processar não seja múltiplo do número de tarefas executadas simultaneamente...
+                        var tarefasNovo = tarefas.Where(x => x != null).ToArray();
+                        tarefas = null;
+                        await Task.WhenAll(tarefasNovo);
+                    }
                 }
-            }
 
-            GravarLogGeral(informacoesExecucaoInstancias);
+                GravarLogGeral(informacoesExecucaoInstancias);
+            }
 
             if (listaInstancias.Count == 1)
             {
                 if (execucaoDebug)
                 {
                     Console.SetWindowSize(200, 60);
+                    Console.WriteLine("Instância: " + metaHeuristica.Instancia);
                     Console.WriteLine("Meta-heurística executada: " + metaHeuristica.NomeHeuristica);
                     Console.WriteLine($"O valor encontrado para a melhor solução foi { metaHeuristica.FOMelhorSolucao }");
                     Console.WriteLine($"Organização dos componentes: [ | { string.Join(" | ", metaHeuristica.MelhorSolucao) } | ]");
@@ -137,6 +173,7 @@ namespace Heuristicas
 
             using (var escritorArquivo = new StreamWriter(arquivoLogGeral))
             {
+                escritorArquivo.WriteLine($"Log gravado após { informacoesExecucaoInstancias.First().Value.Count } execuções às { DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") }\n");
                 escritorArquivo.WriteLine("Instância\t Cut\t Avg");
                 foreach (var instancia in informacoesExecucaoInstancias)
                 {
