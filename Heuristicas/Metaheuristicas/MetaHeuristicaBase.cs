@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,13 +15,14 @@ namespace Heuristicas.Metaheuristicas
         public string Instancia { get; set; }
 
         private bool LogAtivo { get; set; }
-        private DateTime HorarioExcecucao { get; set; }
+        public Stopwatch Cronometro { get; set; }
         private string NomeArquivoLogExecucao { get; set; }
         public string NomeHeuristica { get; set; }
 
         internal Dictionary<int, List<int>> Grafo { get; set; }
         internal int NumeroVertices { get { return Grafo.Count; } }
 
+        public int MelhorIteracao { get; set; }
         public int[] MelhorSolucao { get; set; }
         public int FOMelhorSolucao { get; set; }
         public List<int> IteracoesMelhoraSolucaoGlobal { get; set; }
@@ -31,8 +33,8 @@ namespace Heuristicas.Metaheuristicas
         {
             this.Instancia = instancia;
             this.NomeHeuristica = nomeHeuristica;
-            this.HorarioExcecucao = DateTime.Now;
 
+            this.Cronometro = new Stopwatch();
             this.IteracoesMelhoraSolucaoGlobal = new List<int>();
             this.LogAtivo = logAtivo;
             this.NomeArquivoLogExecucao = string.Format(ConfigurationManager.AppSettings["CAMINHO_ARQUIVO_LOG_EXECUCAO"], NomeHeuristica, "111");// HorarioExcecucao.ToString("yyyy-MM-dd-HHmmss"));

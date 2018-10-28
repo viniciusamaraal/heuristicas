@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,12 +21,14 @@ namespace Heuristicas.Metaheuristicas
 
     public class EstruturaTabu
     {
+        private int IncrementoTamanhoListaTabu { get; set; }
         private int QuantidadeIteracoesProibicaoOriginal { get; set; }
         private int QuantidadeIteracoesPriobicao { get; set; }
         private Restricao[,] ListaRestricoes { get; set; }
 
-        public EstruturaTabu(int dimensao, int qtdIteracoesProibicao)
+        public EstruturaTabu(int dimensao, int qtdIteracoesProibicao, int incrementoTamanhoListaTabu)
         {
+            this.IncrementoTamanhoListaTabu = incrementoTamanhoListaTabu;
             this.QuantidadeIteracoesProibicaoOriginal = qtdIteracoesProibicao;
             this.QuantidadeIteracoesPriobicao = qtdIteracoesProibicao;
 
@@ -42,7 +45,7 @@ namespace Heuristicas.Metaheuristicas
 
         public void IncrementarTamanhoLista()
         {
-            this.QuantidadeIteracoesPriobicao += 5;
+            this.QuantidadeIteracoesPriobicao += this.IncrementoTamanhoListaTabu;
         }
 
         public void ResetarTamanhoLista()
@@ -148,30 +151,36 @@ namespace Heuristicas.Metaheuristicas
     {
         private int NumeroMaximoIteracoesSemMelhora { get; set; }
         private int NumeroIteracoesProibicaoLista { get; set; }
+        private int IncrementoTamanhoListaTabu { get; set; }
+        private int ModuloIteracaoSemMelhoraIncrementoListaTabu { get; set; }        
 
-        public BuscaTabu(string instancia, bool logAtivo, double multiplicadorNumeroMaximoIteracoesSemMelhora, double multiplicadorNumeroIteracoesProibicaoLista)
+        public BuscaTabu(string instancia, bool logAtivo, double multiplicadorNumeroMaximoIteracoesSemMelhora, double multiplicadorNumeroIteracoesProibicaoLista, int incrementoTamanhoListaTabu, int moduloIteracaoSemMelhoraIncrementoListaTabu)
             : base(instancia, Constantes.HeuristicasImplementadas.BuscaTabu, logAtivo)
         {
             this.NumeroMaximoIteracoesSemMelhora = (int)(base.NumeroVertices * multiplicadorNumeroMaximoIteracoesSemMelhora);
             this.NumeroIteracoesProibicaoLista = (int)(base.NumeroVertices * multiplicadorNumeroIteracoesProibicaoLista);
+            this.IncrementoTamanhoListaTabu = incrementoTamanhoListaTabu;
+            this.ModuloIteracaoSemMelhoraIncrementoListaTabu = moduloIteracaoSemMelhoraIncrementoListaTabu;
         }
 
         public override Task ExecutarMetaheuristica()
         {
             return Task.Factory.StartNew(() =>
             {
-                int iterAtual = 0, melhorIter = 0, melhor_i = -1, melhor_j = -1, foSolucaoAtual = 0;
+                Cronometro.Start();
 
-                var estruturaTabu = new EstruturaTabu(base.NumeroVertices, this.NumeroIteracoesProibicaoLista);
+                int iterAtual = 0, melhor_i = -1, melhor_j = -1, foSolucaoAtual = 0;
 
-                var solucaoAtual = GerarSolucaoInicial(); // new int[] { 2, 6, 15, 1, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
+                var estruturaTabu = new EstruturaTabu(base.NumeroVertices, this.NumeroIteracoesProibicaoLista, this.IncrementoTamanhoListaTabu);
+
+                var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 2, 6, 15, 1, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
                 Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
 
                 foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual);
 
                 GravarLogDuranteExecucao($"{ melhor_i }; { melhor_j }; { foSolucaoAtual }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }\n");
 
-                while (iterAtual - melhorIter < this.NumeroMaximoIteracoesSemMelhora)
+                while (iterAtual - this.MelhorIteracao < this.NumeroMaximoIteracoesSemMelhora)
                 {
                     iterAtual++;
 
@@ -188,7 +197,7 @@ namespace Heuristicas.Metaheuristicas
 
                     if (foSolucaoAtual < FOMelhorSolucao)
                     {
-                        melhorIter = iterAtual;
+                        this.MelhorIteracao = iterAtual;
                         FOMelhorSolucao = foSolucaoAtual;
 
                         Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
@@ -199,10 +208,12 @@ namespace Heuristicas.Metaheuristicas
                     }
                     else
                     {
-                        if ((iterAtual - melhorIter) % 50 == 0)
+                        if ((iterAtual - this.MelhorIteracao) % this.ModuloIteracaoSemMelhoraIncrementoListaTabu == 0)
                             estruturaTabu.IncrementarTamanhoLista();
                     }
                 }
+
+                Cronometro.Stop();
 
                 GravarLogDuranteExecucao($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
                 GravarLogDuranteExecucao($"Cutdwidth: { base.FOMelhorSolucao }");
