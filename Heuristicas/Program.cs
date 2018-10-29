@@ -31,9 +31,9 @@ namespace Heuristicas
             double multiplicadorNumeroMaximoRejeicoesLAHC = 10000;
             double multiplicadorTamanhoMemoriaLAHC = 100;
 
-            double multiplicadorIteracoesSemMelhoraBT = 100; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesSemMelhoraBT = 200; // multiplicado pelo número de vértices do grafo
             double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
-            int incrementoTamanhoListaTabuBT = 2;
+            int incrementoTamanhoListaTabuBT = 1;
             int moduloIteracaoSemMelhoraIncrementoListaTabu = 50;
 
             double multiplicadorNumeroMaximoIteracoesSemMelhoraILS = 1000; // multiplicado pelo número de vértices do grafo
@@ -69,6 +69,9 @@ namespace Heuristicas
             }
             else
             {
+                listaInstancias.Add("p64_21_22");
+                listaInstancias.Add("p97_24_26");
+
                 //listaInstancias.Add("p31_18_21");
                 //listaInstancias.Add("p37_18_20");
                 //listaInstancias.Add("p50_19_25");

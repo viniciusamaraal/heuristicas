@@ -71,9 +71,6 @@ namespace Heuristicas.Metaheuristicas
         
         public int QuantidadeTrocas(int i, int j)
         {
-            if (i < 0 || j < 0)
-                return 0;
-
             return this.ListaRestricoes[i, j].Visitas.Count;
         }
 
@@ -173,7 +170,7 @@ namespace Heuristicas.Metaheuristicas
 
                 var estruturaTabu = new EstruturaTabu(base.NumeroVertices, this.NumeroIteracoesProibicaoLista, this.IncrementoTamanhoListaTabu);
 
-                var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 2, 6, 15, 1, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
+                var solucaoAtual = GerarSolucaoInicial(); // new int[] { 2, 6, 15, 1, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
                 Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
 
                 foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual);
@@ -231,13 +228,12 @@ namespace Heuristicas.Metaheuristicas
             var listaCandidatos = new List<Tuple<int, int>>();
 
             foSolucaoAtual = int.MaxValue;
+            foAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
 
             for (int i = 0; i < solucaoAtual.Length - 1; i++)
             {
                 for (int j = i + 1; j < solucaoAtual.Length; j++)
                 {
-                    foAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
-
                     // Faz o movimento de troca da vizinhança
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
@@ -254,6 +250,9 @@ namespace Heuristicas.Metaheuristicas
                             listaCandidatos = new List<Tuple<int, int>>();
                             listaCandidatos.Add(Tuple.Create<int, int>(i, j));
                             foSolucaoAtual = foVizinho;
+
+                            melhor_i = i;
+                            melhor_j = j;
                         }
 
                         if (foVizinho == foSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j))
@@ -264,6 +263,8 @@ namespace Heuristicas.Metaheuristicas
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
+
+                    foAtual = foVizinho; // evitar o recalculo do fo atual a cada nova iteração
                 }
             }
 
@@ -292,7 +293,6 @@ namespace Heuristicas.Metaheuristicas
                         solucaoInicial[i] = vertice.Key;
                         i++;
                     }
-                    
                     
                     int k = 0;
                     int l = i + verticesLigadosNaoInseridos.Count + 1;

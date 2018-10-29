@@ -135,6 +135,7 @@ namespace Heuristicas.Metaheuristicas
                         if (solucao[j] == verticeRelacionado)
                             posicaoVerticeRelacionado = j;
                     }
+
                     // se o vértice relacionado está em alguma posição de índice maior que a posição atual da solução que está sendo avaliada...
                     if (posicaoVerticeRelacionado > i) 
                     { 
@@ -143,6 +144,7 @@ namespace Heuristicas.Metaheuristicas
                     }
                 }
             }
+
             return contadorLigacoesPosicoes.Max(x => x.Value); // retorna o maior valor encontrado (cutwidth)
         }
 
