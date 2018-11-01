@@ -19,7 +19,7 @@ namespace Heuristicas
         {
             bool execucaoDebug = true;
 
-            int quantidadeExcecucoes = 10;
+            int quantidadeExcecucoes = 1;
             int quantidadeExecucoesSimultaneas = 8;
             execucaoDebug = quantidadeExecucoesSimultaneas > 1 ? false : execucaoDebug;
             var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
@@ -32,7 +32,7 @@ namespace Heuristicas
             double multiplicadorTamanhoMemoriaLAHC = 100;
 
             double multiplicadorIteracoesSemMelhoraBT = 200; // multiplicado pelo número de vértices do grafo
-            double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesProibicaoListaBT = 0.1; // multiplicado pelo número de vértices do grafo
             int incrementoTamanhoListaTabuBT = 1;
             int moduloIteracaoSemMelhoraIncrementoListaTabu = 50;
 
@@ -69,8 +69,9 @@ namespace Heuristicas
             }
             else
             {
-                listaInstancias.Add("p64_21_22");
-                listaInstancias.Add("p97_24_26");
+                listaInstancias.Add("p50_19_25");
+                //listaInstancias.Add("p64_21_22");
+                //listaInstancias.Add("p97_24_26");
 
                 //listaInstancias.Add("p31_18_21");
                 //listaInstancias.Add("p37_18_20");
@@ -160,6 +161,7 @@ namespace Heuristicas
                     Console.WriteLine("Meta-heurística executada: " + metaHeuristica.NomeHeuristica);
                     Console.WriteLine($"O valor encontrado para a melhor solução foi { metaHeuristica.FOMelhorSolucao }");
                     Console.WriteLine($"Organização dos componentes: [ | { string.Join(" | ", metaHeuristica.MelhorSolucao) } | ]");
+                    Console.WriteLine($"Chamadas à função objetivo: { metaHeuristica.ContadorChamadasFuncaoObjetivo }");
 
                     Console.ReadKey();
                 }

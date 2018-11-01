@@ -170,10 +170,10 @@ namespace Heuristicas.Metaheuristicas
 
                 var estruturaTabu = new EstruturaTabu(base.NumeroVertices, this.NumeroIteracoesProibicaoLista, this.IncrementoTamanhoListaTabu);
 
-                var solucaoAtual = GerarSolucaoInicial(); // new int[] { 2, 6, 15, 1, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
-                Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
+                var solucaoAtual = new List<int> { 1, 15, 6, 2, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
+                MelhorSolucao = new List<int>(solucaoAtual);
 
-                foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual);
+                foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
 
                 GravarLogDuranteExecucao($"{ melhor_i }; { melhor_j }; { foSolucaoAtual }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }\n");
 
@@ -181,7 +181,7 @@ namespace Heuristicas.Metaheuristicas
                 {
                     iterAtual++;
 
-                    CalcularMelhorVizinho(solucaoAtual, iterAtual, estruturaTabu, ref melhor_i, ref melhor_j, ref foSolucaoAtual);
+                    CalcularMelhorVizinhoBestImprovement(solucaoAtual, iterAtual, estruturaTabu, ref melhor_i, ref melhor_j, ref foSolucaoAtual);
 
                     // Troca os elementos de acordo com a melhor vizinhança retornada
                     int aux = solucaoAtual[melhor_i];
@@ -197,7 +197,7 @@ namespace Heuristicas.Metaheuristicas
                         this.MelhorIteracao = iterAtual;
                         FOMelhorSolucao = foSolucaoAtual;
 
-                        Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
+                        MelhorSolucao = new List<int>(solucaoAtual);
 
                         this.IteracoesMelhoraSolucaoGlobal.Add(iterAtual);
 
@@ -221,25 +221,28 @@ namespace Heuristicas.Metaheuristicas
             });
         }
 
-        private void CalcularMelhorVizinho(int[] solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
+        private void CalcularMelhorVizinhoBestImprovement(List<int> solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
         {
             int aux;
             int foAtual = 0, foVizinho = 0;
             var listaCandidatos = new List<Tuple<int, int>>();
 
-            foSolucaoAtual = int.MaxValue;
-            foAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
+            var informacoesPosicoes = RetornarGrauVerticesPosicoes(solucaoAtual);
+            var funcaoAvaliacaoSolucalInicial = ExecutarFuncaoAvaliacao(solucaoAtual);
 
-            for (int i = 0; i < solucaoAtual.Length - 1; i++)
+            foSolucaoAtual = int.MaxValue;
+            foAtual = funcaoAvaliacaoSolucalInicial.Max(x => x.Value);
+
+            for (int i = 0; i < solucaoAtual.Count - 1; i++)
             {
-                for (int j = i + 1; j < solucaoAtual.Length; j++)
+                for (int j = i + 1; j < solucaoAtual.Count; j++)
                 {
                     // Faz o movimento de troca da vizinhança
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
 
-                    foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual);
+                    foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
 
                     // se a lista tabu não restringe o elemento ou, mesmo que haja restrição, o resultado da função objetivo encontrado no momento é melhor que a melhor solução (fo_star)
                     if (foVizinho < FOMelhorSolucao || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
@@ -274,49 +277,91 @@ namespace Heuristicas.Metaheuristicas
             melhor_j = listaCandidatos[escolhaAleatoria].Item2;
         }
 
-        private int[] GerarSolucaoInicial()
+        private void ExecutarBuscaLocalAdaptada(int[] solucaoAtual)
         {
-            var solucaoInicial = new int[NumeroVertices];
-            List<int> elementoInserido = new List<int>();
-            int i = 0, posicaoVertice;
+            bool houveMelhoria = false;
 
-            var novoGravo = Grafo.OrderByDescending(x => x.Value.Count);
-            foreach (var vertice in novoGravo)
+            int[] melhorSolucao = new int[solucaoAtual.Length];
+            MelhorSolucao = new List<int>(solucaoAtual);
+
+            do
             {
-                if (!elementoInserido.Contains(vertice.Key))
+
+            } while (houveMelhoria);
+        }
+
+        private void RecuperarVerticesPassiveisMudanca(List<int> solucao)
+        {
+            var candidatosMelhoriaSolucao = new Dictionary<int, List<int>>();
+            var informacoesPosicoes = RetornarGrauVerticesPosicoes(solucao);
+
+            for (int i = 0; i < solucao.Count; i++)
+            {
+                int situacaoPosicao = informacoesPosicoes[i].GrauVerticeEsquerda - informacoesPosicoes[i].GrauVerticeEsquerda;
+                if (situacaoPosicao == 0)
+                    candidatosMelhoriaSolucao.Add(i, new List<int> { informacoesPosicoes[i].ObterPosicaoMediana() });
+                else
                 {
-                    var verticesLigadosNaoInseridos = vertice.Value.Where(x => !elementoInserido.Contains(x)).OrderBy(x => Grafo[x].Count).ToList();
-
-                    posicaoVertice = i + (verticesLigadosNaoInseridos.Count / 2);
-                    if (posicaoVertice == 0)
+                    if (situacaoPosicao % 2 != 0)
                     {
-                        solucaoInicial[i] = vertice.Key;
-                        i++;
-                    }
-                    
-                    int k = 0;
-                    int l = i + verticesLigadosNaoInseridos.Count + 1;
-                    for (int j = i; j < l; j++)
-                    {
-                        if (j == posicaoVertice)
-                        {
-                            solucaoInicial[i] = vertice.Key;
-                            elementoInserido.Add(vertice.Key);
-                        }
-                        else
-                        {
-                            solucaoInicial[i] = verticesLigadosNaoInseridos[k];
-                            elementoInserido.Add(verticesLigadosNaoInseridos[k]);
-                            k++;
-                        }
+                        candidatosMelhoriaSolucao.Add(i, new List<int>());
 
-                        i++;
                     }
                 }
-            }
-            
 
-            return solucaoInicial;
+            }
         }
+
+        private PosicaoSolucao[] RetornarGrauVerticesPosicoes(List<int> solucao)
+        {
+            PosicaoSolucao[] posicoes = new PosicaoSolucao[solucao.Count];
+
+            for (int i = 0; i < solucao.Count; i++)
+            {
+                posicoes[i] = new PosicaoSolucao();
+                var ligacoesVertice = Grafo[solucao[i]];
+                foreach (int verticeRelacionado in ligacoesVertice)
+                {
+                    int posicaoVerticeRelacionado = -1;
+                    for (int j = 0; j < solucao.Count && posicaoVerticeRelacionado == -1; j++)
+                    {
+                        if (solucao[j] == verticeRelacionado)
+                            posicaoVerticeRelacionado = j;
+                    }
+
+                    if (posicaoVerticeRelacionado < i)
+                        posicoes[i].GrauVerticeEsquerda++; 
+                    else
+                        posicoes[i].GrauVerticeDireita++;
+
+                    if (posicaoVerticeRelacionado < posicoes[i].MenorPosicaoVerticeRelacionado)
+                        posicoes[i].MenorPosicaoVerticeRelacionado = posicaoVerticeRelacionado;
+
+                    if (posicaoVerticeRelacionado > posicoes[i].MaiorPosicaoVerticeRelacionado)
+                        posicoes[i].MaiorPosicaoVerticeRelacionado = posicaoVerticeRelacionado;
+                }
+            }
+
+            return posicoes;
+        }
+    }
+}
+
+public class PosicaoSolucao
+{
+    public int GrauVerticeEsquerda { get; set; }
+    public int GrauVerticeDireita { get; set; }
+    public int MenorPosicaoVerticeRelacionado { get; set; }
+    public int MaiorPosicaoVerticeRelacionado { get; set; }
+
+    public PosicaoSolucao()
+    {
+        this.MenorPosicaoVerticeRelacionado = int.MaxValue;
+        this.MaiorPosicaoVerticeRelacionado = int.MinValue;
+    }
+
+    public int ObterPosicaoMediana()
+    {
+        return this.MenorPosicaoVerticeRelacionado + this.MaiorPosicaoVerticeRelacionado / 2;
     }
 }

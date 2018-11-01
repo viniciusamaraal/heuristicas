@@ -23,23 +23,23 @@ namespace Heuristicas.Metaheuristicas
             return Task.Factory.StartNew(() =>
             {
                 int iterAtual = 1, melhorIter = 0, nivelAtual = 1, iterMesmoNivel = 1, foSolucaoAtual = 0, foSolucaoPerturbadaAposDescida = 0;
-                int[] solucaoPerturbada;
+                List<int> solucaoPerturbada;
 
                 var solucaoAtual = GerarSolucaoAleatoria();
-                foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
+                foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
 
                 while (iterAtual - melhorIter < this.NumeroMaximoIteracoesSemMelhora)
                 {
                     solucaoPerturbada = PerturbarVetor(solucaoAtual, nivelAtual);
                     ExecutarDescidaFistImprovement(solucaoPerturbada);
 
-                    foSolucaoPerturbadaAposDescida = ExecutarFuncaoAvaliacao(solucaoPerturbada);
+                    foSolucaoPerturbadaAposDescida = ExecutarFuncaoAvaliacao(solucaoPerturbada).Max(x => x.Value);
 
                     GravarLogDuranteExecucao($"{ iterAtual }; {nivelAtual}; {foSolucaoAtual}; { foSolucaoPerturbadaAposDescida }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
 
                     if (foSolucaoPerturbadaAposDescida < foSolucaoAtual)
                     {
-                        Array.Copy(solucaoPerturbada, solucaoAtual, solucaoAtual.Length);
+                        solucaoAtual = new List<int>(solucaoPerturbada);
                         foSolucaoAtual = foSolucaoPerturbadaAposDescida;
 
                         melhorIter = iterAtual;
@@ -62,7 +62,7 @@ namespace Heuristicas.Metaheuristicas
                     iterAtual++;
                 }
 
-                Array.Copy(solucaoAtual, MelhorSolucao, solucaoAtual.Length);
+                MelhorSolucao = new List<int>(solucaoAtual);
                 FOMelhorSolucao = foSolucaoAtual;
 
                 GravarLogDuranteExecucao($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
@@ -71,17 +71,17 @@ namespace Heuristicas.Metaheuristicas
             });
         }
 
-        private int[] PerturbarVetor(int[] solucaoAtual, int nivelAtual)
+        private List<int> PerturbarVetor(List<int> solucaoAtual, int nivelAtual)
         {
-            int[] solucaoPerturbada = new int[solucaoAtual.Length];
-            Array.Copy(solucaoAtual, solucaoPerturbada, solucaoAtual.Length);
+            var solucaoPerturbada = new List<int>(solucaoAtual.Count);
+            solucaoPerturbada = new List<int>(solucaoAtual);
 
             int posicao1 = 0, posicao2 = 0, aux = 0;
 
             int numeroTrocas = 0;
             while (numeroTrocas < nivelAtual)
             {
-                Util.GerarDoisNumerosAleatoriosDiferentes(0, solucaoAtual.Length, ref posicao1, ref posicao2);
+                Util.GerarDoisNumerosAleatoriosDiferentes(0, solucaoAtual.Count, ref posicao1, ref posicao2);
 
                 aux = solucaoPerturbada[posicao1];
                 solucaoPerturbada[posicao1] = solucaoPerturbada[posicao2];
@@ -93,12 +93,12 @@ namespace Heuristicas.Metaheuristicas
             return solucaoPerturbada;
         }
 
-        private void ExecutarDescidaFistImprovement(int[] solucaoPerturbada)
+        private void ExecutarDescidaFistImprovement(List<int> solucaoPerturbada)
         {
             int foSolucaoAtual = 0, foPrimeiroMelhorVizinho = 0, melhor_i = -1, melhor_j = -1, aux = -1;
             bool melhorou;
 
-            foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoPerturbada);
+            foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoPerturbada).Max(x => x.Value);
 
             do
             {
@@ -117,20 +117,20 @@ namespace Heuristicas.Metaheuristicas
             } while (melhorou);
         }
 
-        private int CalcularPrimeiroMelhorVizinho(int[] solucaoAtual, int foSolucaoAtual, ref int melhor_i, ref int melhor_j)
+        private int CalcularPrimeiroMelhorVizinho(List<int> solucaoAtual, int foSolucaoAtual, ref int melhor_i, ref int melhor_j)
         {
             int aux, foVizinho, foMelhorVizinho = foSolucaoAtual;
             bool encontrou = false;
 
-            for (int i = 0; i < solucaoAtual.Length - 1 && !encontrou; i++)
+            for (int i = 0; i < solucaoAtual.Count - 1 && !encontrou; i++)
             {
-                for (int j = i + 1; j < solucaoAtual.Length && !encontrou; j++)
+                for (int j = i + 1; j < solucaoAtual.Count && !encontrou; j++)
                 {
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
 
-                    foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual);
+                    foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
 
                     if (foVizinho < foSolucaoAtual)
                     {

@@ -23,9 +23,10 @@ namespace Heuristicas.Metaheuristicas
         internal int NumeroVertices { get { return Grafo.Count; } }
 
         public int MelhorIteracao { get; set; }
-        public int[] MelhorSolucao { get; set; }
+        public List<int> MelhorSolucao { get; set; }
         public int FOMelhorSolucao { get; set; }
         public List<int> IteracoesMelhoraSolucaoGlobal { get; set; }
+        public int ContadorChamadasFuncaoObjetivo { get; set; }
 
         public abstract Task ExecutarMetaheuristica();
 
@@ -44,7 +45,7 @@ namespace Heuristicas.Metaheuristicas
             this.Grafo = new Dictionary<int, List<int>>();
             CarregarInformacoesInstancia();
 
-            this.MelhorSolucao = new int[this.NumeroVertices];
+            this.MelhorSolucao = new List<int>(NumeroVertices);
         }
 
         /// <summary>
@@ -80,9 +81,9 @@ namespace Heuristicas.Metaheuristicas
         /// Gera uma solução aleatória qualquer de acordo com o número de vértices do grafo.
         /// </summary>
         /// <returns> Retorna uma solução aleatória qualquer. </returns>
-        protected int[] GerarSolucaoAleatoria()
+        protected List<int> GerarSolucaoAleatoria()
         {
-            var solucao = new int[NumeroVertices];
+            var solucao = new List<int>(NumeroVertices);
 
             var r = new Random();
 
@@ -90,11 +91,11 @@ namespace Heuristicas.Metaheuristicas
             for (int i = 1; i <= NumeroVertices; i++)
             {
                 // Gera uma posição para o vértice da iteração corrente no vetor de solução inicial
-                int posicaoAleatoria = r.Next(0, solucao.Length);
+                int posicaoAleatoria = r.Next(0, solucao.Count);
 
                 // Se a posição já possui algum elemento, gera um novo índice até que uma posição vazia seja encontrada
                 while (solucao[posicaoAleatoria] != 0)
-                    posicaoAleatoria = r.Next(0, solucao.Length);
+                    posicaoAleatoria = r.Next(0, solucao.Count);
 
                 solucao[posicaoAleatoria] = i;
             }
@@ -102,12 +103,28 @@ namespace Heuristicas.Metaheuristicas
             return solucao;
         }
 
-        protected int[] GerarSolucaoSequencial()
+        protected List<int> GerarSolucaoSequencial()
         {
-            var solucao = new int[NumeroVertices];
+            var solucao = new List<int>(NumeroVertices);
 
-            for (int i = 0; i < solucao.Length; i++)
+            for (int i = 0; i < solucao.Count; i++)
                 solucao[i] = i + 1;
+
+            return solucao;
+        }
+
+        protected List<int> GerarSolucaoLiteratura()
+        {
+            // TODO: continuar de acordo com o artigo [38]
+            var solucao = new List<int>(NumeroVertices);
+            var listaVerticesCandidatos = new List<int>();
+            for (int i = 1; i <= this.NumeroVertices; i++)
+                listaVerticesCandidatos.Add(i);
+
+            do
+            {
+
+            } while (listaVerticesCandidatos.Any());
 
             return solucao;
         }
@@ -117,20 +134,22 @@ namespace Heuristicas.Metaheuristicas
         /// </summary>
         /// <param name="solucao"> Organização linear dos vértices que compõem o grafo </param>
         /// <returns> Retorna o número de cutdwith (maior número de arestas que transpassam um único vértice) </returns>
-        protected int ExecutarFuncaoAvaliacao(int[] solucao)
+        protected Dictionary<string, int> ExecutarFuncaoAvaliacao(List<int> solucao)
         {
+            this.ContadorChamadasFuncaoObjetivo++;
+
             var contadorLigacoesPosicoes = new Dictionary<string, int>(); // inicialização do dicionário que representa cada "corte" do arranjo linear formado pela solução
-            for (int i = 0; i < solucao.Length - 1; i++)
+            for (int i = 0; i < solucao.Count - 1; i++)
                 contadorLigacoesPosicoes.Add(i + "_" + (i + 1), 0);
 
-            for (int i = 0; i < solucao.Length - 1; i++)
+            for (int i = 0; i < solucao.Count - 1; i++)
             {
                 var ligacoesVertice = Grafo[solucao[i]]; // recupera a lista de vértices relacionados ao vétice da posição corrente (i) da solução
                 foreach (int verticeRelacionado in ligacoesVertice)
                 {
                     // busca a posição do vértice relacionado
                     int posicaoVerticeRelacionado = -1;
-                    for (int j = i + 1; j < solucao.Length && posicaoVerticeRelacionado == -1; j++)
+                    for (int j = i + 1; j < solucao.Count && posicaoVerticeRelacionado == -1; j++)
                     {
                         if (solucao[j] == verticeRelacionado)
                             posicaoVerticeRelacionado = j;
@@ -145,7 +164,12 @@ namespace Heuristicas.Metaheuristicas
                 }
             }
 
-            return contadorLigacoesPosicoes.Max(x => x.Value); // retorna o maior valor encontrado (cutwidth)
+            return contadorLigacoesPosicoes;
+        }
+
+        protected void CalcularCutwidthAposMovimento(int[] solucao, Dictionary<string, int> cutwidthAtual, int posicao1, int posicao2)
+        {
+
         }
 
         protected void GravarLogDuranteExecucao(string logString)

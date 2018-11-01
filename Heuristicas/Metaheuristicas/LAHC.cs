@@ -33,16 +33,16 @@ namespace Heuristicas.Metaheuristicas
         /// </summary>
         /// <param name="solucaoAtual"> Solução que será modificada pelo movimento </param>
         /// <returns> Retorna um vetor contendo a nova solução após a execução do movimento </returns>
-        private int[] ExecutarMovimento(int[] solucaoAtual)
+        private List<int> ExecutarMovimento(List<int> solucaoAtual)
         {
             var r = new Random();
 
             // Gera duas posições diferentes de modo aleatório
             int posicao1 = -1, posicao2 = -1;
-            Util.GerarDoisNumerosAleatoriosDiferentes(0, solucaoAtual.Length, ref posicao1, ref posicao2);
+            Util.GerarDoisNumerosAleatoriosDiferentes(0, solucaoAtual.Count, ref posicao1, ref posicao2);
 
             // Realiza a troca de posições de acordo com os índices gerados
-            int[] solucaoVizinha = (int[])solucaoAtual.Clone();
+            var solucaoVizinha = new List<int>(solucaoAtual);
             int posicaoAux = solucaoVizinha[posicao1];
             solucaoVizinha[posicao1] = solucaoVizinha[posicao2];
             solucaoVizinha[posicao2] = posicaoAux;
@@ -55,9 +55,9 @@ namespace Heuristicas.Metaheuristicas
             return Task.Factory.StartNew(() =>
             {
                 var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
-                int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual);
+                int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
 
-                MelhorSolucao = (int[])solucaoAtual.Clone();
+                MelhorSolucao = new List<int>(solucaoAtual);
                 FOMelhorSolucao = foSolucaoAtual;
 
                 int qtdVertices = Grafo.Count;
@@ -69,20 +69,20 @@ namespace Heuristicas.Metaheuristicas
                 while (numeroRejeicoes < this.NumeroMaximoRejeicoesConsecutivas)
                 {
                     var solucaoVizinha = ExecutarMovimento(solucaoAtual);
-                    int foSolucaoVizinha = ExecutarFuncaoAvaliacao(solucaoVizinha);
+                    int foSolucaoVizinha = ExecutarFuncaoAvaliacao(solucaoVizinha).Max(x => x.Value);
 
                     if (foSolucaoVizinha < foSolucaoAtual || foSolucaoVizinha < memoria[controleMemoria])
                     {
                         if (foSolucaoVizinha < foSolucaoAtual)
                             numeroRejeicoes = 0;
 
-                        solucaoAtual = (int[])solucaoVizinha.Clone();
+                        solucaoAtual = new List<int>(solucaoVizinha);
                         foSolucaoAtual = foSolucaoVizinha;
 
                         if (foSolucaoVizinha < FOMelhorSolucao)
                         {
                             FOMelhorSolucao = foSolucaoVizinha;
-                            MelhorSolucao = (int[])solucaoVizinha.Clone();
+                            MelhorSolucao = new List<int>(solucaoVizinha);
                         }
                     }
 
