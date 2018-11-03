@@ -26,14 +26,17 @@ namespace Heuristicas.Metaheuristicas
                 List<int> solucaoPerturbada;
 
                 var solucaoAtual = GerarSolucaoAleatoria();
-                foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
+
+                ExecutarFuncaoAvaliacao(solucaoAtual);
+                foSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
 
                 while (iterAtual - melhorIter < this.NumeroMaximoIteracoesSemMelhora)
                 {
                     solucaoPerturbada = PerturbarVetor(solucaoAtual, nivelAtual);
                     ExecutarDescidaFistImprovement(solucaoPerturbada);
 
-                    foSolucaoPerturbadaAposDescida = ExecutarFuncaoAvaliacao(solucaoPerturbada).Max(x => x.Value);
+                    ExecutarFuncaoAvaliacao(solucaoPerturbada);
+                    foSolucaoPerturbadaAposDescida = CutwidthGrafo.Max(x => x.Value);
 
                     GravarLogDuranteExecucao($"{ iterAtual }; {nivelAtual}; {foSolucaoAtual}; { foSolucaoPerturbadaAposDescida }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
 
@@ -63,10 +66,10 @@ namespace Heuristicas.Metaheuristicas
                 }
 
                 MelhorSolucao = new List<int>(solucaoAtual);
-                FOMelhorSolucao = foSolucaoAtual;
+                FOMenorCutwidthMelhorSolucao = foSolucaoAtual;
 
                 GravarLogDuranteExecucao($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
-                GravarLogDuranteExecucao($"Cutdwidth: { base.FOMelhorSolucao }");
+                GravarLogDuranteExecucao($"Cutdwidth: { base.FOMenorCutwidthMelhorSolucao }");
                 GravarLogDuranteExecucao($"Solução Final: {  string.Join(" | ", MelhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) }");
             });
         }
@@ -98,7 +101,8 @@ namespace Heuristicas.Metaheuristicas
             int foSolucaoAtual = 0, foPrimeiroMelhorVizinho = 0, melhor_i = -1, melhor_j = -1, aux = -1;
             bool melhorou;
 
-            foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoPerturbada).Max(x => x.Value);
+            ExecutarFuncaoAvaliacao(solucaoPerturbada);
+            foSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
 
             do
             {
@@ -130,7 +134,8 @@ namespace Heuristicas.Metaheuristicas
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
 
-                    foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
+                    ExecutarFuncaoAvaliacao(solucaoAtual);
+                    foVizinho = CutwidthGrafo.Max(x => x.Value);
 
                     if (foVizinho < foSolucaoAtual)
                     {

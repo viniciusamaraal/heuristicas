@@ -19,8 +19,8 @@ namespace Heuristicas
         {
             bool execucaoDebug = true;
 
-            int quantidadeExcecucoes = 1;
-            int quantidadeExecucoesSimultaneas = 8;
+            int quantidadeExcecucoes = 10;
+            int quantidadeExecucoesSimultaneas = 5;
             execucaoDebug = quantidadeExecucoesSimultaneas > 1 ? false : execucaoDebug;
             var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
 
@@ -32,7 +32,7 @@ namespace Heuristicas
             double multiplicadorTamanhoMemoriaLAHC = 100;
 
             double multiplicadorIteracoesSemMelhoraBT = 200; // multiplicado pelo número de vértices do grafo
-            double multiplicadorIteracoesProibicaoListaBT = 0.1; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
             int incrementoTamanhoListaTabuBT = 1;
             int moduloIteracaoSemMelhoraIncrementoListaTabu = 50;
 
@@ -69,24 +69,19 @@ namespace Heuristicas
             }
             else
             {
-                listaInstancias.Add("p50_19_25");
+                //listaInstancias.Add("p50_19_25");
                 //listaInstancias.Add("p64_21_22");
                 //listaInstancias.Add("p97_24_26");
 
-                //listaInstancias.Add("p31_18_21");
-                //listaInstancias.Add("p37_18_20");
-                //listaInstancias.Add("p50_19_25");
-                //listaInstancias.Add("p55_20_24");
-                //listaInstancias.Add("p58_20_21");
-                //listaInstancias.Add("p64_21_22");
-                //listaInstancias.Add("p67_21_22");
-                //listaInstancias.Add("p82_23_24");
-                //listaInstancias.Add("p83_23_24");
-                //listaInstancias.Add("p92_24_26");
-                //listaInstancias.Add("p93_24_27");
-                //listaInstancias.Add("p95_24_27");
-                //listaInstancias.Add("p97_24_26");
-                //listaInstancias.Add("p98_24_29");
+                listaInstancias.Add("p31_18_21");
+                listaInstancias.Add("p37_18_20");
+                listaInstancias.Add("p50_19_25");
+                listaInstancias.Add("p58_20_21");
+                listaInstancias.Add("p64_21_22");
+                listaInstancias.Add("p67_21_22");
+                listaInstancias.Add("p82_23_24");
+                listaInstancias.Add("p86_23_24");
+                listaInstancias.Add("p97_24_26");
 
                 if (!listaInstancias.Any())
                 {
@@ -159,7 +154,7 @@ namespace Heuristicas
                     Console.SetWindowSize(200, 60);
                     Console.WriteLine("Instância: " + metaHeuristica.Instancia);
                     Console.WriteLine("Meta-heurística executada: " + metaHeuristica.NomeHeuristica);
-                    Console.WriteLine($"O valor encontrado para a melhor solução foi { metaHeuristica.FOMelhorSolucao }");
+                    Console.WriteLine($"O valor encontrado para a melhor solução foi { metaHeuristica.FOMenorCutwidthMelhorSolucao }");
                     Console.WriteLine($"Organização dos componentes: [ | { string.Join(" | ", metaHeuristica.MelhorSolucao) } | ]");
                     Console.WriteLine($"Chamadas à função objetivo: { metaHeuristica.ContadorChamadasFuncaoObjetivo }");
 
@@ -167,7 +162,7 @@ namespace Heuristicas
                 }
                 else
                 {
-                    Console.Write(metaHeuristica.FOMelhorSolucao);
+                    Console.Write(metaHeuristica.FOMenorCutwidthMelhorSolucao);
                 }
             }
         }
@@ -181,17 +176,18 @@ namespace Heuristicas
             using (var escritorArquivo = new StreamWriter(arquivoLogGeral))
             {
                 escritorArquivo.WriteLine($"Log gravado após { informacoesExecucaoInstancias.First().Value.Count } execuções às { DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") }\n");
-                escritorArquivo.WriteLine("Instância\tCutwidth\tCutwidth médio\tMenor melhor iteração\tMaior melhor iteração\tTempo médio\t\tMelhor solução ");
+                escritorArquivo.WriteLine("Instância\tCutwidth\tCutwidth médio\tMenor soma\tMenor melhor iteração\tMaior melhor iteração\tTempo médio\t\tMelhor solução ");
                 foreach (var instancia in informacoesExecucaoInstancias)
                 {
-                    int menorCutwidth = instancia.Value.Min(x => x.FOMelhorSolucao);
-                    double mediaCutwidth = instancia.Value.Average(x => x.FOMelhorSolucao);
-                    var melhorSolucao = instancia.Value.Where(x => x.FOMelhorSolucao == menorCutwidth).First().MelhorSolucao;
-                    double tempoMedio = instancia.Value.Sum(x => x.Cronometro.Elapsed.Seconds) / instancia.Value.Count;
+                    int menorCutwidth = instancia.Value.Min(x => x.FOMenorCutwidthMelhorSolucao);
+                    double mediaCutwidth = instancia.Value.Average(x => x.FOMenorCutwidthMelhorSolucao);
+                    var melhorSolucao = instancia.Value.Where(x => x.FOMenorCutwidthMelhorSolucao == menorCutwidth).First().MelhorSolucao;
+                    double tempoMedio = instancia.Value.Sum(x => x.Cronometro.Elapsed.TotalSeconds) / instancia.Value.Count;
                     int menorMelhorIteracao = instancia.Value.Min(x => x.MelhorIteracao);
                     int maiorMelhorIteracao = instancia.Value.Max(x => x.MelhorIteracao);
+                    int menorSoma = instancia.Value.Min(x => x.FOMenorSomaCutwidthMelhorSolucao);
 
-                    escritorArquivo.WriteLine($"{ instancia.Value.First().Instancia }\t{ menorCutwidth }\t\t\t{ mediaCutwidth }\t\t\t\t{ menorMelhorIteracao.ToString().PadLeft(4, '0') }\t\t\t\t\t{ maiorMelhorIteracao.ToString().PadLeft(4, '0') }\t\t\t\t\t{ tempoMedio }\t\t\t\t { string.Join(" | ", melhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) } ");
+                    escritorArquivo.WriteLine($"{ instancia.Value.First().Instancia }\t{ menorCutwidth }\t\t\t{ mediaCutwidth }\t\t\t\t{ menorSoma }\t\t\t{ menorMelhorIteracao.ToString().PadLeft(4, '0') }\t\t\t\t\t{ maiorMelhorIteracao.ToString().PadLeft(4, '0') }\t\t\t\t\t{ tempoMedio }\t\t\t\t { string.Join(" | ", melhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) } ");
                 }
             }
         }

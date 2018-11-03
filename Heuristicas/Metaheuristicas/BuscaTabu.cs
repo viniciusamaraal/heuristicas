@@ -166,36 +166,39 @@ namespace Heuristicas.Metaheuristicas
             {
                 Cronometro.Start();
 
-                int iterAtual = 0, melhor_i = -1, melhor_j = -1, foSolucaoAtual = 0;
+                int iterAtual = 0, melhor_i = -1, melhor_j = -1, foMenorCutwidthSolucaoAtual = 0, foMenorSomaCutwidthSolucaoAtual = 0;
 
                 var estruturaTabu = new EstruturaTabu(base.NumeroVertices, this.NumeroIteracoesProibicaoLista, this.IncrementoTamanhoListaTabu);
 
-                var solucaoAtual = new List<int> { 1, 15, 6, 2, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
+                var solucaoAtual = GerarSolucaoAleatoria();// new List<int> { 1, 15, 6, 2, 5, 9, 8, 13, 11, 3, 10, 7, 4, 12, 19, 17, 16, 14, 18 }; // GerarSolucaoAleatoria(); // GerarSolucaoInicial();
                 MelhorSolucao = new List<int>(solucaoAtual);
 
-                foSolucaoAtual = FOMelhorSolucao = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
+                ExecutarFuncaoAvaliacao(solucaoAtual);
+                foMenorCutwidthSolucaoAtual = FOMenorCutwidthMelhorSolucao = CutwidthGrafo.Max(x => x.Value);
+                foMenorSomaCutwidthSolucaoAtual = FOMenorSomaCutwidthMelhorSolucao = CutwidthGrafo.Sum(x => x.Value);
 
-                GravarLogDuranteExecucao($"{ melhor_i }; { melhor_j }; { foSolucaoAtual }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }\n");
+                GravarLogDuranteExecucao($"{ melhor_i }; { melhor_j }; { foMenorCutwidthSolucaoAtual }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }\n");
 
                 while (iterAtual - this.MelhorIteracao < this.NumeroMaximoIteracoesSemMelhora)
                 {
                     iterAtual++;
 
-                    CalcularMelhorVizinhoBestImprovement(solucaoAtual, iterAtual, estruturaTabu, ref melhor_i, ref melhor_j, ref foSolucaoAtual);
+                    CalcularMelhorVizinhoBestImprovement(solucaoAtual, iterAtual, estruturaTabu, ref melhor_i, ref melhor_j, ref foMenorCutwidthSolucaoAtual, ref foMenorSomaCutwidthSolucaoAtual);
 
                     // Troca os elementos de acordo com a melhor vizinhança retornada
                     int aux = solucaoAtual[melhor_i];
                     solucaoAtual[melhor_i] = solucaoAtual[melhor_j];
                     solucaoAtual[melhor_j] = aux;
 
-                    GravarLogDuranteExecucao($"{ melhor_i.ToString().PadLeft(2, '0') }; { melhor_j.ToString().PadLeft(2, '0') }; { foSolucaoAtual.ToString().PadLeft(2, '0') }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
+                    GravarLogDuranteExecucao($"{ melhor_i.ToString().PadLeft(2, '0') }; { melhor_j.ToString().PadLeft(2, '0') }; { foMenorCutwidthSolucaoAtual.ToString().PadLeft(2, '0') }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
 
                     estruturaTabu.DefinirTabu(melhor_i, melhor_j, iterAtual);
 
-                    if (foSolucaoAtual < FOMelhorSolucao)
+                    if (foMenorCutwidthSolucaoAtual < FOMenorCutwidthMelhorSolucao || (foMenorCutwidthSolucaoAtual == FOMenorCutwidthMelhorSolucao && foMenorSomaCutwidthSolucaoAtual < FOMenorSomaCutwidthMelhorSolucao))
                     {
                         this.MelhorIteracao = iterAtual;
-                        FOMelhorSolucao = foSolucaoAtual;
+                        FOMenorCutwidthMelhorSolucao = foMenorCutwidthSolucaoAtual;
+                        FOMenorSomaCutwidthMelhorSolucao = foMenorSomaCutwidthSolucaoAtual;
 
                         MelhorSolucao = new List<int>(solucaoAtual);
 
@@ -213,7 +216,7 @@ namespace Heuristicas.Metaheuristicas
                 Cronometro.Stop();
 
                 GravarLogDuranteExecucao($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
-                GravarLogDuranteExecucao($"Cutdwidth: { base.FOMelhorSolucao }");
+                GravarLogDuranteExecucao($"Cutdwidth: { base.FOMenorCutwidthMelhorSolucao }");
                 GravarLogDuranteExecucao($"Solução Final: {  string.Join(" | ", MelhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) }");
 
                 estruturaTabu.ImprimirTrocasListaTabu(base.Instancia);
@@ -221,31 +224,117 @@ namespace Heuristicas.Metaheuristicas
             });
         }
 
-        private void CalcularMelhorVizinhoBestImprovement(List<int> solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
+        private void CalcularMelhorVizinhoBestImprovement(List<int> solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foMenorCutwidthSolucaoAtual, ref int foMenorSomaCutwidthSolucaoAtual)
         {
             int aux;
-            int foAtual = 0, foVizinho = 0;
+            int foMenorCutwidthAtual = 0, foMenorSomaCutWidth = 0, foMenorCutwidthVizinho = 0, foMenorCutwidthSomaVizinho = 0;
+            //int posicaoInicial, posicaoFinal;
             var listaCandidatos = new List<Tuple<int, int>>();
 
+            ExecutarFuncaoAvaliacao(solucaoAtual);
             var informacoesPosicoes = RetornarGrauVerticesPosicoes(solucaoAtual);
-            var funcaoAvaliacaoSolucalInicial = ExecutarFuncaoAvaliacao(solucaoAtual);
 
-            foSolucaoAtual = int.MaxValue;
-            foAtual = funcaoAvaliacaoSolucalInicial.Max(x => x.Value);
+            foMenorCutwidthSolucaoAtual = int.MaxValue;
+            foMenorCutwidthAtual = CutwidthGrafo.Max(x => x.Value);
+            foMenorSomaCutWidth = CutwidthGrafo.Sum(x => x.Value);
 
-            for (int i = 0; i < solucaoAtual.Count - 1; i++)
+            for (int i = 0; i < solucaoAtual.Count; i++)
             {
-                for (int j = i + 1; j < solucaoAtual.Count; j++)
+                for (int j = i; j < solucaoAtual.Count; j++)
                 {
+                    if (i == j) continue;
+
                     // Faz o movimento de troca da vizinhança
+                    aux = solucaoAtual[i];
+                    solucaoAtual[i] = solucaoAtual[j];
+                    solucaoAtual[j] = aux;
+
+                    ExecutarFuncaoAvaliacao(solucaoAtual);
+                    foMenorCutwidthVizinho = CutwidthGrafo.Max(x => x.Value);
+                    foMenorCutwidthSomaVizinho = CutwidthGrafo.Sum(x => x.Value);
+
+                    // se a lista tabu não restringe o elemento ou, mesmo que haja restrição, o resultado da função objetivo encontrado no momento é melhor que a melhor solução (fo_star)
+                    if (foMenorCutwidthVizinho < this.FOMenorCutwidthMelhorSolucao || (foMenorCutwidthVizinho == this.FOMenorCutwidthMelhorSolucao && foMenorCutwidthSomaVizinho < this.FOMenorSomaCutwidthMelhorSolucao) || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
+                    {
+                        // Caso a nova solução melhore a solução atual ou seja igual à solução atual mas tenham sido feitas menos trocas
+                        if (foMenorCutwidthVizinho < foMenorCutwidthSolucaoAtual || (foMenorCutwidthVizinho == foMenorCutwidthSolucaoAtual && foMenorCutwidthSomaVizinho < foMenorSomaCutwidthSolucaoAtual))
+                        {
+                            listaCandidatos = new List<Tuple<int, int>>();
+                            listaCandidatos.Add(Tuple.Create<int, int>(i, j));
+                            foMenorCutwidthSolucaoAtual = foMenorCutwidthVizinho;
+                            foMenorSomaCutwidthSolucaoAtual = foMenorCutwidthSomaVizinho;
+
+                            melhor_i = i;
+                            melhor_j = j;
+                        }
+                        else if (foMenorCutwidthVizinho == foMenorCutwidthSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j))
+                            listaCandidatos.Add(Tuple.Create<int, int>(i, j));
+                    }
+
+                    // Desfaz o movimento de troca para analisar o restante da vizinhança
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
+                    //solucaoAtual.Remove(aux);
+                    //solucaoAtual.Insert(i, aux);
 
-                    foVizinho = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
+                    foMenorCutwidthAtual = foMenorCutwidthVizinho; // evitar o recalculo do fo atual a cada nova iteração
+                }
+            }
+
+            // Dentre os melhores candidatos disponíveis, escolhe-se aleatoriamente algum deles
+            int escolhaAleatoria = new Random().Next(0, listaCandidatos.Count);
+            melhor_i = listaCandidatos[escolhaAleatoria].Item1;
+            melhor_j = listaCandidatos[escolhaAleatoria].Item2;
+        }
+
+
+        private void CalcularMelhorVizinhoBestImprovementNovaSolucao(List<int> solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foSolucaoAtual)
+        {
+            int aux;
+            int foAtual = 0, foVizinho = 0;
+            //int posicaoInicial, posicaoFinal;
+            var listaCandidatos = new List<Tuple<int, int>>();
+
+            ExecutarFuncaoAvaliacao(solucaoAtual);
+            var informacoesPosicoes = RetornarGrauVerticesPosicoes(solucaoAtual);
+
+            foSolucaoAtual = int.MaxValue;
+            foAtual = CutwidthGrafo.Max(x => x.Value);
+
+            for (int i = 0; i < solucaoAtual.Count; i++)
+            {
+                for (int j = i; j < solucaoAtual.Count; j++)
+                {
+                    if (i == j) continue;
+
+                    // Faz o movimento de troca da vizinhança
+                    aux = solucaoAtual[i];
+                    solucaoAtual[i] = solucaoAtual[j];
+                    solucaoAtual[j] = aux;
+                    //solucaoAtual.Remove(aux);
+                    //solucaoAtual.Insert(j, aux);
+
+                    //if (i < j)
+                    //{
+                    //    posicaoInicial = i > 0 ? i - 1 : i;
+                    //    posicaoFinal = j == solucaoAtual.Count - 1 ? j : j + 1;
+                    //}
+                    //else
+                    //{
+                    //    posicaoInicial = j > 0 ? j - 1 : j;
+                    //    posicaoFinal = i == solucaoAtual.Count - 1 ? i : i + 1;
+                    //}
+
+                    //int novo = ExecutarFuncaoAvaliacaoNova(solucaoAtual, posicaoInicial, posicaoFinal);
+                    //int velho = ExecutarFuncaoAvaliacao(solucaoAtual).Sum(x => x.Value);
+                    //if (novo != velho)
+                    //    novo = velho;
+                    ExecutarFuncaoAvaliacao(solucaoAtual);
+                    foVizinho = CutwidthGrafo.Max(x => x.Value);
 
                     // se a lista tabu não restringe o elemento ou, mesmo que haja restrição, o resultado da função objetivo encontrado no momento é melhor que a melhor solução (fo_star)
-                    if (foVizinho < FOMelhorSolucao || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
+                    if (foVizinho < FOMenorCutwidthMelhorSolucao || !estruturaTabu.ElementoProibido(i, j, iteracaoAtual))
                     {
                         // Caso a nova solução melhore a solução atual ou seja igual à solução atual mas tenham sido feitas menos trocas
                         if (foVizinho < foSolucaoAtual)
@@ -261,11 +350,13 @@ namespace Heuristicas.Metaheuristicas
                         if (foVizinho == foSolucaoAtual && estruturaTabu.QuantidadeTrocas(i, j) < estruturaTabu.QuantidadeTrocas(melhor_i, melhor_j))
                             listaCandidatos.Add(Tuple.Create<int, int>(i, j));
                     }
-                    
+
                     // Desfaz o movimento de troca para analisar o restante da vizinhança
                     aux = solucaoAtual[j];
                     solucaoAtual[j] = solucaoAtual[i];
                     solucaoAtual[i] = aux;
+                    //solucaoAtual.Remove(aux);
+                    //solucaoAtual.Insert(i, aux);
 
                     foAtual = foVizinho; // evitar o recalculo do fo atual a cada nova iteração
                 }
@@ -275,41 +366,6 @@ namespace Heuristicas.Metaheuristicas
             int escolhaAleatoria = new Random().Next(0, listaCandidatos.Count);
             melhor_i = listaCandidatos[escolhaAleatoria].Item1;
             melhor_j = listaCandidatos[escolhaAleatoria].Item2;
-        }
-
-        private void ExecutarBuscaLocalAdaptada(int[] solucaoAtual)
-        {
-            bool houveMelhoria = false;
-
-            int[] melhorSolucao = new int[solucaoAtual.Length];
-            MelhorSolucao = new List<int>(solucaoAtual);
-
-            do
-            {
-
-            } while (houveMelhoria);
-        }
-
-        private void RecuperarVerticesPassiveisMudanca(List<int> solucao)
-        {
-            var candidatosMelhoriaSolucao = new Dictionary<int, List<int>>();
-            var informacoesPosicoes = RetornarGrauVerticesPosicoes(solucao);
-
-            for (int i = 0; i < solucao.Count; i++)
-            {
-                int situacaoPosicao = informacoesPosicoes[i].GrauVerticeEsquerda - informacoesPosicoes[i].GrauVerticeEsquerda;
-                if (situacaoPosicao == 0)
-                    candidatosMelhoriaSolucao.Add(i, new List<int> { informacoesPosicoes[i].ObterPosicaoMediana() });
-                else
-                {
-                    if (situacaoPosicao % 2 != 0)
-                    {
-                        candidatosMelhoriaSolucao.Add(i, new List<int>());
-
-                    }
-                }
-
-            }
         }
 
         private PosicaoSolucao[] RetornarGrauVerticesPosicoes(List<int> solucao)

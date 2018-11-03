@@ -55,10 +55,12 @@ namespace Heuristicas.Metaheuristicas
             return Task.Factory.StartNew(() =>
             {
                 var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
-                int foSolucaoAtual = ExecutarFuncaoAvaliacao(solucaoAtual).Max(x => x.Value);
+
+                ExecutarFuncaoAvaliacao(solucaoAtual);
+                int foSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
 
                 MelhorSolucao = new List<int>(solucaoAtual);
-                FOMelhorSolucao = foSolucaoAtual;
+                FOMenorCutwidthMelhorSolucao = foSolucaoAtual;
 
                 int qtdVertices = Grafo.Count;
                 int controleMemoria = 0;
@@ -69,7 +71,9 @@ namespace Heuristicas.Metaheuristicas
                 while (numeroRejeicoes < this.NumeroMaximoRejeicoesConsecutivas)
                 {
                     var solucaoVizinha = ExecutarMovimento(solucaoAtual);
-                    int foSolucaoVizinha = ExecutarFuncaoAvaliacao(solucaoVizinha).Max(x => x.Value);
+
+                    ExecutarFuncaoAvaliacao(solucaoVizinha);
+                    int foSolucaoVizinha = CutwidthGrafo.Max(x => x.Value);
 
                     if (foSolucaoVizinha < foSolucaoAtual || foSolucaoVizinha < memoria[controleMemoria])
                     {
@@ -79,9 +83,9 @@ namespace Heuristicas.Metaheuristicas
                         solucaoAtual = new List<int>(solucaoVizinha);
                         foSolucaoAtual = foSolucaoVizinha;
 
-                        if (foSolucaoVizinha < FOMelhorSolucao)
+                        if (foSolucaoVizinha < FOMenorCutwidthMelhorSolucao)
                         {
-                            FOMelhorSolucao = foSolucaoVizinha;
+                            FOMenorCutwidthMelhorSolucao = foSolucaoVizinha;
                             MelhorSolucao = new List<int>(solucaoVizinha);
                         }
                     }
