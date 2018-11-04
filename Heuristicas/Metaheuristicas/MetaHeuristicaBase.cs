@@ -27,6 +27,7 @@ namespace Heuristicas.Metaheuristicas
         public List<int> MelhorSolucao { get; set; }
         public int FOMenorCutwidthMelhorSolucao { get; set; }
         public int FOMenorSomaCutwidthMelhorSolucao { get; set; }
+        public int FOMenorQuantidadeVerticesMaiorCutwidthMelhorSolucao { get; set; }
         public List<int> IteracoesMelhoraSolucaoGlobal { get; set; }
         public int ContadorChamadasFuncaoObjetivo { get; set; }
 
