@@ -26,7 +26,7 @@ namespace Heuristicas
 
             // Declaração de variáveis e definição valores default
             var listaInstancias = new List<string>();
-            string heuristica = Constantes.HeuristicasImplementadas.BuscaTabu;
+            string heuristica = Constantes.HeuristicasImplementadas.ILS;
 
             double multiplicadorNumeroMaximoRejeicoesLAHC = 10000;
             double multiplicadorTamanhoMemoriaLAHC = 100;
@@ -36,7 +36,7 @@ namespace Heuristicas
             int incrementoTamanhoListaTabuBT = 1;
             int moduloIteracaoSemMelhoraIncrementoListaTabu = 50;
 
-            double multiplicadorNumeroMaximoIteracoesSemMelhoraILS = 1000; // multiplicado pelo número de vértices do grafo
+            double multiplicadorNumeroMaximoIteracoesSemMelhoraILS = 50; // multiplicado pelo número de vértices do grafo
             double divisorNumeroMaximoIteracoesMesmoNivelILS = 5; // dividido pelo número máximo aceitável de execuções sem melhora
 
             MetaHeuristicaBase metaHeuristica = null;
@@ -71,7 +71,7 @@ namespace Heuristicas
             {
                 //listaInstancias.Add("p50_19_25");
                 //listaInstancias.Add("p64_21_22");
-                //listaInstancias.Add("p97_24_26");
+                listaInstancias.Add("p97_24_26");
 
                 //listaInstancias.Add("p31_18_21");
                 //listaInstancias.Add("p37_18_20");
@@ -82,13 +82,13 @@ namespace Heuristicas
                 //listaInstancias.Add("p82_23_24");
                 //listaInstancias.Add("p86_23_24");
                 //listaInstancias.Add("p97_24_26");
+                //listaInstancias.Add("p98_24_29");
 
-                
                 //listaInstancias.Add("p82_23_24");
                 //listaInstancias.Add("p86_23_24");
                 //listaInstancias.Add("p97_24_26");
                 //listaInstancias.Add("p98_24_29");
-                
+
 
                 if (!listaInstancias.Any())
                 {

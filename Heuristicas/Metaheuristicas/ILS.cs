@@ -22,13 +22,14 @@ namespace Heuristicas.Metaheuristicas
         {
             return Task.Factory.StartNew(() =>
             {
-                int iterAtual = 1, melhorIter = 0, nivelAtual = 1, iterMesmoNivel = 1, foSolucaoAtual = 0, foSolucaoPerturbadaAposDescida = 0;
+                int iterAtual = 1, melhorIter = 0, nivelAtual = 1, iterMesmoNivel = 1, foMenorCutwidthSolucaoAtual = 0, foMenorSomaCutwidthSolucaoAtual = 0, foMenorCutwidthSolucaoPerturbadaAposDescida = 0, foMenorSomaCutwidthSolucaoPerturbadaAposDescida;
                 List<int> solucaoPerturbada;
 
                 var solucaoAtual = GerarSolucaoAleatoria();
 
                 ExecutarFuncaoAvaliacao(solucaoAtual);
-                foSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
+                foMenorCutwidthSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
+                foMenorSomaCutwidthSolucaoAtual = CutwidthGrafo.Sum(x => x.Value);
 
                 while (iterAtual - melhorIter < this.NumeroMaximoIteracoesSemMelhora)
                 {
@@ -36,14 +37,16 @@ namespace Heuristicas.Metaheuristicas
                     ExecutarDescidaFistImprovement(solucaoPerturbada);
 
                     ExecutarFuncaoAvaliacao(solucaoPerturbada);
-                    foSolucaoPerturbadaAposDescida = CutwidthGrafo.Max(x => x.Value);
+                    foMenorCutwidthSolucaoPerturbadaAposDescida = CutwidthGrafo.Max(x => x.Value);
+                    foMenorSomaCutwidthSolucaoPerturbadaAposDescida = CutwidthGrafo.Sum(x => x.Value);
 
-                    GravarLogDuranteExecucao($"{ iterAtual }; {nivelAtual}; {foSolucaoAtual}; { foSolucaoPerturbadaAposDescida }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
+                    GravarLogDuranteExecucao($"{ iterAtual }; {nivelAtual}; {foMenorCutwidthSolucaoAtual}; { foMenorCutwidthSolucaoPerturbadaAposDescida }; {  string.Join(" | ", solucaoAtual.Select(x => x.ToString().PadLeft(2, '0'))) }");
 
-                    if (foSolucaoPerturbadaAposDescida < foSolucaoAtual)
+                    if (foMenorCutwidthSolucaoPerturbadaAposDescida < foMenorCutwidthSolucaoAtual || (foMenorCutwidthSolucaoPerturbadaAposDescida == foMenorCutwidthSolucaoAtual && foMenorSomaCutwidthSolucaoPerturbadaAposDescida < foMenorSomaCutwidthSolucaoAtual))
                     {
                         solucaoAtual = new List<int>(solucaoPerturbada);
-                        foSolucaoAtual = foSolucaoPerturbadaAposDescida;
+                        foMenorCutwidthSolucaoAtual = foMenorCutwidthSolucaoPerturbadaAposDescida;
+                        foMenorSomaCutwidthSolucaoAtual = foMenorSomaCutwidthSolucaoPerturbadaAposDescida;
 
                         melhorIter = iterAtual;
                         nivelAtual = 1;
@@ -66,7 +69,7 @@ namespace Heuristicas.Metaheuristicas
                 }
 
                 MelhorSolucao = new List<int>(solucaoAtual);
-                FOMenorCutwidthMelhorSolucao = foSolucaoAtual;
+                FOMenorCutwidthMelhorSolucao = foMenorCutwidthSolucaoAtual;
 
                 GravarLogDuranteExecucao($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
                 GravarLogDuranteExecucao($"Cutdwidth: { base.FOMenorCutwidthMelhorSolucao }");
@@ -98,32 +101,37 @@ namespace Heuristicas.Metaheuristicas
 
         private void ExecutarDescidaFistImprovement(List<int> solucaoPerturbada)
         {
-            int foSolucaoAtual = 0, foPrimeiroMelhorVizinho = 0, melhor_i = -1, melhor_j = -1, aux = -1;
+            int foMenorCutwidthSolucaoAtual = 0, foMenorSomaCutwidthSolucaoAtual = 0, foMenorCutwidthPrimeiroMelhorVizinho = 0, foMenorSomaCutwidthPrimeiroMelhorVizinho = 0, melhor_i = -1, melhor_j = -1, aux = -1;
             bool melhorou;
 
             ExecutarFuncaoAvaliacao(solucaoPerturbada);
-            foSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
+            foMenorCutwidthSolucaoAtual = CutwidthGrafo.Max(x => x.Value);
+            foMenorSomaCutwidthSolucaoAtual = CutwidthGrafo.Sum(x => x.Value);
 
             do
             {
                 melhorou = false;
-                foPrimeiroMelhorVizinho = CalcularPrimeiroMelhorVizinho(solucaoPerturbada, foSolucaoAtual, ref melhor_i, ref melhor_j);
-                if (foPrimeiroMelhorVizinho < foSolucaoAtual)
+                var resultadoBuscaLocal = CalcularPrimeiroMelhorVizinho(solucaoPerturbada, foMenorCutwidthSolucaoAtual, foMenorSomaCutwidthSolucaoAtual, ref melhor_i, ref melhor_j);
+                foMenorCutwidthPrimeiroMelhorVizinho = resultadoBuscaLocal.Item1;
+                foMenorSomaCutwidthPrimeiroMelhorVizinho = resultadoBuscaLocal.Item2;
+
+                if (foMenorCutwidthPrimeiroMelhorVizinho < foMenorCutwidthSolucaoAtual || (foMenorCutwidthPrimeiroMelhorVizinho == foMenorCutwidthSolucaoAtual && foMenorSomaCutwidthPrimeiroMelhorVizinho < foMenorSomaCutwidthSolucaoAtual))
                 {
                     aux = solucaoPerturbada[melhor_j];
                     solucaoPerturbada[melhor_j] = solucaoPerturbada[melhor_i];
                     solucaoPerturbada[melhor_i] = aux;
 
-                    foSolucaoAtual = foPrimeiroMelhorVizinho;
+                    foMenorCutwidthSolucaoAtual = foMenorCutwidthPrimeiroMelhorVizinho;
+                    foMenorSomaCutwidthSolucaoAtual = foMenorSomaCutwidthPrimeiroMelhorVizinho;
 
                     melhorou = true;
                 }
             } while (melhorou);
         }
 
-        private int CalcularPrimeiroMelhorVizinho(List<int> solucaoAtual, int foSolucaoAtual, ref int melhor_i, ref int melhor_j)
+        private Tuple<int, int> CalcularPrimeiroMelhorVizinho(List<int> solucaoAtual, int foMenorCutwidthSolucaoAtual, int foMenorSomaCutwidthSolucaoAtual, ref int melhor_i, ref int melhor_j)
         {
-            int aux, foVizinho, foMelhorVizinho = foSolucaoAtual;
+            int aux, foMenorCutwidthVizinho, foMenorSomaCutwidthVizinho, foMenorCutwidthMelhorVizinho = foMenorCutwidthSolucaoAtual, foMenorSomaCutwidthMelhorVizinho = foMenorSomaCutwidthSolucaoAtual;
             bool encontrou = false;
 
             for (int i = 0; i < solucaoAtual.Count - 1 && !encontrou; i++)
@@ -135,13 +143,15 @@ namespace Heuristicas.Metaheuristicas
                     solucaoAtual[i] = aux;
 
                     ExecutarFuncaoAvaliacao(solucaoAtual);
-                    foVizinho = CutwidthGrafo.Max(x => x.Value);
+                    foMenorCutwidthVizinho = CutwidthGrafo.Max(x => x.Value);
+                    foMenorSomaCutwidthVizinho = CutwidthGrafo.Sum(x => x.Value);
 
-                    if (foVizinho < foSolucaoAtual)
+                    if (foMenorCutwidthVizinho < foMenorCutwidthSolucaoAtual || (foMenorCutwidthVizinho == foMenorCutwidthSolucaoAtual && foMenorSomaCutwidthVizinho < foMenorSomaCutwidthSolucaoAtual))
                     {
                         melhor_i = i;
                         melhor_j = j;
-                        foMelhorVizinho = foVizinho;
+                        foMenorCutwidthMelhorVizinho = foMenorCutwidthVizinho;
+                        foMenorSomaCutwidthMelhorVizinho = foMenorSomaCutwidthVizinho;
 
                         encontrou = true;
                     }
@@ -152,7 +162,7 @@ namespace Heuristicas.Metaheuristicas
                 }
             }
 
-            return foMelhorVizinho;
+            return Tuple.Create<int, int>(foMenorCutwidthMelhorVizinho, foMenorSomaCutwidthMelhorVizinho);
         }
     }
 }

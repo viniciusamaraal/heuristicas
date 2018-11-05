@@ -196,7 +196,7 @@ namespace Heuristicas.Metaheuristicas
                     estruturaTabu.DefinirTabu(melhor_i, melhor_j, iterAtual);
 
                     if (foMenorCutwidthSolucaoAtual < FOMenorCutwidthMelhorSolucao || 
-                        (foMenorCutwidthSolucaoAtual == FOMenorCutwidthMelhorSolucao && ((foMenorQuantidadeVerticesMaiorCutwidthSolucaoAtual < FOMenorQuantidadeVerticesMaiorCutwidthMelhorSolucao) || (foMenorQuantidadeVerticesMaiorCutwidthSolucaoAtual == FOMenorQuantidadeVerticesMaiorCutwidthMelhorSolucao && foMenorSomaCutwidthSolucaoAtual < FOMenorSomaCutwidthMelhorSolucao))))
+                        (foMenorCutwidthSolucaoAtual == FOMenorCutwidthMelhorSolucao && foMenorSomaCutwidthSolucaoAtual < FOMenorSomaCutwidthMelhorSolucao))
                     {
                         this.MelhorIteracao = iterAtual;
                         FOMenorCutwidthMelhorSolucao = foMenorCutwidthSolucaoAtual;
@@ -232,7 +232,7 @@ namespace Heuristicas.Metaheuristicas
         private void CalcularMelhorVizinhoBestImprovement(List<int> solucaoAtual, int iteracaoAtual, EstruturaTabu estruturaTabu, ref int melhor_i, ref int melhor_j, ref int foMenorCutwidthSolucaoAtual, ref int foMenorSomaCutwidthSolucaoAtual, ref int foMenorQuantidadeVerticesMaiorCutwidthSolucaoAtual)
         {
             int aux;
-            int foMenorCutwidthAtual = 0, foMenorSomaCutWidth = 0, foMenorQuantidadeVerticesMaiorCutwidth, foMenorCutwidthVizinho = 0, foMenorCutwidthSomaVizinho = 0, foMenorQuantidadeVerticesMaiorCutwidthVizinho = 0;
+            int foMenorCutwidthMelhorVizinho = 0, foMenorSomaCutWidthMelhorVizinho = 0, foMenorQuantidadeVerticesMaiorCutwidthMelhorVizinho = 0, foMenorCutwidthVizinho = 0, foMenorCutwidthSomaVizinho = 0, foMenorQuantidadeVerticesMaiorCutwidthVizinho = 0;
             //int posicaoInicial, posicaoFinal;
             var listaCandidatos = new List<Tuple<int, int>>();
 
@@ -243,9 +243,9 @@ namespace Heuristicas.Metaheuristicas
             foMenorSomaCutwidthSolucaoAtual = int.MaxValue;
             foMenorQuantidadeVerticesMaiorCutwidthSolucaoAtual = int.MaxValue;
 
-            foMenorCutwidthAtual = CutwidthGrafo.Max(x => x.Value);
-            foMenorSomaCutWidth = CutwidthGrafo.Sum(x => x.Value);
-            foMenorQuantidadeVerticesMaiorCutwidth = CutwidthGrafo.Where(x => x.Value == foMenorCutwidthAtual).Count();
+            foMenorCutwidthMelhorVizinho = CutwidthGrafo.Max(x => x.Value);
+            foMenorSomaCutWidthMelhorVizinho = CutwidthGrafo.Sum(x => x.Value);
+            foMenorQuantidadeVerticesMaiorCutwidthMelhorVizinho = CutwidthGrafo.Where(x => x.Value == foMenorCutwidthMelhorVizinho).Count();
 
             for (int i = 0; i < solucaoAtual.Count; i++)
             {
@@ -265,11 +265,11 @@ namespace Heuristicas.Metaheuristicas
 
                     // se a lista tabu não restringe o elemento ou, mesmo que haja restrição, o resultado da função objetivo encontrado no momento é melhor que a melhor solução (fo_star)
                     if (foMenorCutwidthVizinho < this.FOMenorCutwidthMelhorSolucao ||
-                        (foMenorCutwidthVizinho == this.FOMenorCutwidthMelhorSolucao && (foMenorQuantidadeVerticesMaiorCutwidthVizinho < this.FOMenorQuantidadeVerticesMaiorCutwidthMelhorSolucao || (foMenorQuantidadeVerticesMaiorCutwidthVizinho == this.FOMenorQuantidadeVerticesMaiorCutwidthMelhorSolucao && foMenorCutwidthSomaVizinho < this.FOMenorSomaCutwidthMelhorSolucao))) || 
+                        (foMenorCutwidthVizinho == this.FOMenorCutwidthMelhorSolucao &&  foMenorCutwidthSomaVizinho < this.FOMenorSomaCutwidthMelhorSolucao) || 
                         (!estruturaTabu.ElementoProibido(i, j, iteracaoAtual)))
                     {
                         // Caso a nova solução melhore a solução atual ou seja igual à solução atual mas tenham sido feitas menos trocas
-                        if (foMenorCutwidthVizinho < foMenorCutwidthSolucaoAtual || (foMenorCutwidthVizinho == foMenorCutwidthSolucaoAtual && ((foMenorQuantidadeVerticesMaiorCutwidthVizinho < foMenorQuantidadeVerticesMaiorCutwidthSolucaoAtual) || (foMenorQuantidadeVerticesMaiorCutwidthVizinho == foMenorQuantidadeVerticesMaiorCutwidthSolucaoAtual && foMenorCutwidthSomaVizinho < foMenorSomaCutwidthSolucaoAtual))))
+                        if (foMenorCutwidthVizinho < foMenorCutwidthSolucaoAtual || (foMenorCutwidthVizinho == foMenorCutwidthSolucaoAtual && foMenorCutwidthSomaVizinho < foMenorSomaCutwidthSolucaoAtual))
                         {
                             listaCandidatos = new List<Tuple<int, int>>();
                             listaCandidatos.Add(Tuple.Create<int, int>(i, j));
@@ -291,7 +291,7 @@ namespace Heuristicas.Metaheuristicas
                     //solucaoAtual.Remove(aux);
                     //solucaoAtual.Insert(i, aux);
 
-                    foMenorCutwidthAtual = foMenorCutwidthVizinho; // evitar o recalculo do fo atual a cada nova iteração
+                    foMenorCutwidthMelhorVizinho = foMenorCutwidthVizinho; // evitar o recalculo do fo atual a cada nova iteração
                 }
             }
 
