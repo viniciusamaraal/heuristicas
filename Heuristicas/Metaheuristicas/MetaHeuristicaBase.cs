@@ -123,20 +123,190 @@ namespace Heuristicas.Metaheuristicas
             return solucao;
         }
 
-        protected List<int> GerarSolucaoLiteratura()
+        // Scatter search for the Cutwidth Minimization Problem (C1)
+        protected List<int> GerarSolucaoLiteraturaC1()
         {
-            // TODO: continuar de acordo com o artigo [38]
+            Random random = new Random();
+            int primeiroVertice, menorGrau = -1, posicaoSelecionada = -1, minCutwidth = int.MaxValue, minSomaCutwidth = int.MaxValue, maxCutwidth = int.MinValue, maxSomaCutwidth = int.MinValue, cutwidthSolucao = 0, menorCutwidthSolucao = int.MaxValue;
+            double limiarRLC = 0, cutwidthLimite = 0, cutwidthSomaLimite = 0;
+
+            List<int> melhorSolucao = null;
             var solucao = new List<int>(NumeroVertices);
+
+            var cutwidthListaVerticesCandidatos = new List<int>();
+            var somaCutwidthListaVerticesCandidatos = new List<int>();
+            var listaVerticesCandidatosRLC = new List<int>();
             var listaVerticesCandidatos = new List<int>();
-            for (int i = 1; i <= this.NumeroVertices; i++)
-                listaVerticesCandidatos.Add(i);
+            var listaVerticesNaoInseridos = new List<int>();
 
-            do
+            int tentativas = 0;
+            while (tentativas < 1000)
             {
+                solucao = new List<int>(NumeroVertices);
+                for (int i = 1; i <= this.NumeroVertices; i++)
+                    listaVerticesNaoInseridos.Add(i);
 
-            } while (listaVerticesCandidatos.Any());
+                PosicaoSolucao[] informacoesPosicoesOriginal = RetornarGrauVerticesPosicoes(listaVerticesNaoInseridos).OrderBy(x => x.GrauVertice).ToArray();
+                PosicaoSolucao[] informacoesPosicoesAtualizado = null;
+
+                // definição da primeira posição
+                menorGrau = informacoesPosicoesOriginal.Min(x => x.GrauVertice);
+                informacoesPosicoesAtualizado = informacoesPosicoesOriginal.Where(x => x.GrauVertice == menorGrau).ToArray();
+                posicaoSelecionada = random.Next(0, informacoesPosicoesAtualizado.Length);
+                primeiroVertice = informacoesPosicoesAtualizado[posicaoSelecionada].Vertice;
+                solucao.Add(primeiroVertice);
+                listaVerticesNaoInseridos.Remove(primeiroVertice);
+
+                do
+                {
+                    // Reinicialização de variáveis
+                    cutwidthListaVerticesCandidatos = new List<int>();
+                    somaCutwidthListaVerticesCandidatos = new List<int>();
+                    listaVerticesCandidatos = new List<int>();
+                    listaVerticesCandidatosRLC = new List<int>();
+                    minCutwidth = int.MaxValue;
+                    maxCutwidth = int.MinValue;
+
+                    for (int i = 0; i < solucao.Count; i++)
+                    {
+                        var verticesAdjacentes = Grafo[solucao[i]];
+                        foreach (var vertice in verticesAdjacentes)
+                        {
+                            if (!listaVerticesCandidatos.Contains(vertice) && !solucao.Contains(vertice))
+                                listaVerticesCandidatos.Add(vertice);
+                        }
+                    }
+
+                    for (int i = 0; i < listaVerticesCandidatos.Count; i++)
+                    {
+                        int verticeCandidato = listaVerticesCandidatos[i];
+                        solucao.Add(verticeCandidato);
+
+                        ExecutarFuncaoAvaliacao(solucao);
+                        cutwidthListaVerticesCandidatos.Add(CutwidthGrafo.Max(x => x.Value));
+                        somaCutwidthListaVerticesCandidatos.Add(CutwidthGrafo.Sum(x => x.Value));
+
+                        if (cutwidthListaVerticesCandidatos[i] < minCutwidth || (cutwidthListaVerticesCandidatos[i] == minCutwidth && somaCutwidthListaVerticesCandidatos[i] < minSomaCutwidth))
+                        {
+                            minCutwidth = cutwidthListaVerticesCandidatos[i];
+                            minSomaCutwidth = somaCutwidthListaVerticesCandidatos[i];
+                        }
+                            
+                        if (cutwidthListaVerticesCandidatos[i] > maxCutwidth || (cutwidthListaVerticesCandidatos[i] == minCutwidth && somaCutwidthListaVerticesCandidatos[i] > minSomaCutwidth))
+                        {
+                            maxCutwidth = cutwidthListaVerticesCandidatos[i];
+                            maxSomaCutwidth = somaCutwidthListaVerticesCandidatos[i];
+                        }
+                            
+                        solucao.Remove(verticeCandidato);
+                    }
+
+                    limiarRLC = random.NextDouble();
+                    cutwidthLimite = minCutwidth + (limiarRLC * (maxCutwidth - minCutwidth));
+                    cutwidthSomaLimite = minSomaCutwidth + (limiarRLC * (maxSomaCutwidth - minSomaCutwidth));
+                    for (int i = 0; i < listaVerticesCandidatos.Count; i++)
+                    {
+                        if (cutwidthListaVerticesCandidatos[i] <= cutwidthLimite || somaCutwidthListaVerticesCandidatos[i] <= cutwidthSomaLimite)
+                            listaVerticesCandidatosRLC.Add(listaVerticesCandidatos[i]);
+                    }
+
+                    int elementoEscolhido = listaVerticesCandidatosRLC[random.Next(0, listaVerticesCandidatosRLC.Count)];
+                    solucao.Add(elementoEscolhido);
+                    listaVerticesNaoInseridos.Remove(elementoEscolhido);
+
+                } while (listaVerticesNaoInseridos.Any());
+
+                ExecutarFuncaoAvaliacao(solucao);
+                cutwidthSolucao = CutwidthGrafo.Max(x => x.Value);
+
+                if (cutwidthSolucao < menorCutwidthSolucao)
+                {
+                    melhorSolucao = new List<int>(solucao);
+                    menorCutwidthSolucao = cutwidthSolucao;
+                }
+
+                tentativas++;
+            }
+
+            ExecutarFuncaoAvaliacao(melhorSolucao);
+            menorCutwidthSolucao = CutwidthGrafo.Max(x => x.Value);
 
             return solucao;
+        }
+
+        // Scatter search for the Cutwidth Minimization Problem (C1)
+        protected List<int> GerarSolucaoLiteraturaC2()
+        {
+            Random random = new Random();
+            int verticeSelecionado = 0, menorGrau = 0, posicaoSelecionada = -1, minCutwidth = int.MaxValue, cutwidthSolucao = 0, menorCutwidthSolucao = int.MaxValue;
+
+            List<int> melhorSolucao = null, solucao = new List<int>(NumeroVertices), listaVerticesNaoInseridos = new List<int>(this.NumeroVertices), listaVerticesCandidatos = null, cutwidthListaVerticesCandidatos = null;
+            
+            int tentativas = 0;
+            while (tentativas < 1000)
+            {
+                solucao = new List<int>(NumeroVertices);
+                listaVerticesNaoInseridos = GerarSolucaoAleatoria();
+
+                PosicaoSolucao[] informacoesPosicoesOriginal = RetornarGrauVerticesPosicoes(listaVerticesNaoInseridos).OrderBy(x => x.GrauVertice).ToArray();
+                PosicaoSolucao[] informacoesPosicoesAtualizado = null;
+
+                // definição da primeira posição
+                menorGrau = informacoesPosicoesOriginal.Min(x => x.GrauVertice);
+                informacoesPosicoesAtualizado = informacoesPosicoesOriginal.Where(x => x.GrauVertice == menorGrau).ToArray();
+                posicaoSelecionada = random.Next(0, informacoesPosicoesAtualizado.Length);
+                verticeSelecionado = informacoesPosicoesAtualizado[posicaoSelecionada].Vertice;
+                solucao.Add(verticeSelecionado);
+                listaVerticesNaoInseridos.Remove(verticeSelecionado);
+
+                do
+                {
+                    if (listaVerticesNaoInseridos.Count == 1)
+                        listaVerticesCandidatos = new List<int>() { listaVerticesNaoInseridos[0] };
+                    else
+                        listaVerticesCandidatos = new List<int>(listaVerticesNaoInseridos.GetRange(0, random.Next(1, listaVerticesNaoInseridos.Count)));
+
+                    cutwidthListaVerticesCandidatos = new List<int>(listaVerticesCandidatos.Count);
+                    minCutwidth = int.MaxValue;
+
+                    for (int i = 0; i < listaVerticesCandidatos.Count; i++)
+                    {
+                        int verticeCandidato = listaVerticesCandidatos[i];
+                        solucao.Add(verticeCandidato);
+
+                        ExecutarFuncaoAvaliacao(solucao);
+                        cutwidthListaVerticesCandidatos.Add(CutwidthGrafo.Max(x => x.Value));
+
+                        if (cutwidthListaVerticesCandidatos[i] < minCutwidth)
+                        {
+                            verticeSelecionado = verticeCandidato;
+                            minCutwidth = cutwidthListaVerticesCandidatos[i];
+                        }
+
+                        solucao.Remove(verticeCandidato);
+                    }
+
+                    solucao.Add(verticeSelecionado);
+                    listaVerticesNaoInseridos.Remove(verticeSelecionado);
+
+                } while (listaVerticesNaoInseridos.Any());
+
+                ExecutarFuncaoAvaliacao(solucao);
+                cutwidthSolucao = CutwidthGrafo.Max(x => x.Value);
+
+                if (cutwidthSolucao < menorCutwidthSolucao)
+                {
+                    melhorSolucao = new List<int>(solucao);
+                    menorCutwidthSolucao = cutwidthSolucao;
+                }
+
+                tentativas++;
+            }
+
+            ExecutarFuncaoAvaliacao(melhorSolucao);
+            menorCutwidthSolucao = CutwidthGrafo.Max(x => x.Value);
+
+            return melhorSolucao;
         }
 
         /// <summary>
@@ -148,41 +318,10 @@ namespace Heuristicas.Metaheuristicas
         {
             this.ContadorChamadasFuncaoObjetivo++;
 
-            for (int i = 0; i < solucao.Count - 1; i++)
+            for (int i = 0; i < solucao.Count; i++)
                 CutwidthGrafo[i + "_" + (i + 1)] = 0;
 
-            for (int i = 0; i < solucao.Count - 1; i++)
-            {
-                var ligacoesVertice = Grafo[solucao[i]]; // recupera a lista de vértices relacionados ao vétice da posição corrente (i) da solução
-                foreach (int verticeRelacionado in ligacoesVertice)
-                {
-                    // busca a posição do vértice relacionado
-                    int posicaoVerticeRelacionado = -1;
-                    for (int j = i + 1; j < solucao.Count && posicaoVerticeRelacionado == -1; j++)
-                    {
-                        if (solucao[j] == verticeRelacionado)
-                            posicaoVerticeRelacionado = j;
-                    }
-
-                    // se o vértice relacionado está em alguma posição de índice maior que a posição atual da solução que está sendo avaliada...
-                    if (posicaoVerticeRelacionado > i) 
-                    { 
-                        for (int j = i; j < posicaoVerticeRelacionado; j++) // incrementa o item do dicionário referente ao corte transpassado
-                            CutwidthGrafo[j + "_" + (j + 1)] += 1;
-                    }
-                }
-            }
-        }
-
-        protected int ExecutarFuncaoAvaliacaoNova(List<int> solucao, int posicaoInicial, int? posicaoFinal = null)
-        {
-            posicaoFinal = posicaoFinal == null ? NumeroVertices - 1 : posicaoFinal;
-
-            var cutWidthAuxiliar = new Dictionary<string, int>();
-            for (int i = 0; i < NumeroVertices - 1; i++)
-                cutWidthAuxiliar.Add(i + "_" + (i + 1), CutwidthGrafo[i + "_" + (i + 1)]);
-
-            for (int i = posicaoInicial; i < posicaoFinal; i++)
+            for (int i = 0; i < solucao.Count; i++)
             {
                 var ligacoesVertice = Grafo[solucao[i]]; // recupera a lista de vértices relacionados ao vétice da posição corrente (i) da solução
                 foreach (int verticeRelacionado in ligacoesVertice)
@@ -198,18 +337,44 @@ namespace Heuristicas.Metaheuristicas
                     // se o vértice relacionado está em alguma posição de índice maior que a posição atual da solução que está sendo avaliada...
                     if (posicaoVerticeRelacionado > i)
                     {
-                        for (int j = i; j < posicaoVerticeRelacionado && j < posicaoFinal; j++) // incrementa o item do dicionário referente ao corte transpassado
-                            cutWidthAuxiliar[j + "_" + (j + 1)] += 1;
+                        for (int j = i; j < posicaoVerticeRelacionado; j++) // incrementa o item do dicionário referente ao corte transpassado
+                            CutwidthGrafo[j + "_" + (j + 1)] += 1;
                     }
                 }
             }
-
-            return cutWidthAuxiliar.Sum(x => x.Value);
         }
 
-        protected void CalcularCutwidthAposMovimento(int[] solucao, Dictionary<string, int> cutwidthAtual, int posicao1, int posicao2)
+        protected PosicaoSolucao[] RetornarGrauVerticesPosicoes(List<int> solucao)
         {
+            PosicaoSolucao[] posicoes = new PosicaoSolucao[solucao.Count];
 
+            for (int i = 0; i < solucao.Count; i++)
+            {
+                posicoes[i] = new PosicaoSolucao() { Vertice = solucao[i] };
+                var ligacoesVertice = Grafo[solucao[i]];
+                foreach (int verticeRelacionado in ligacoesVertice)
+                {
+                    int posicaoVerticeRelacionado = -1;
+                    for (int j = 0; j < solucao.Count && posicaoVerticeRelacionado == -1; j++)
+                    {
+                        if (solucao[j] == verticeRelacionado)
+                            posicaoVerticeRelacionado = j;
+                    }
+
+                    if (posicaoVerticeRelacionado < i)
+                        posicoes[i].GrauVerticeEsquerda++;
+                    else
+                        posicoes[i].GrauVerticeDireita++;
+
+                    if (posicaoVerticeRelacionado < posicoes[i].MenorPosicaoVerticeRelacionado)
+                        posicoes[i].MenorPosicaoVerticeRelacionado = posicaoVerticeRelacionado;
+
+                    if (posicaoVerticeRelacionado > posicoes[i].MaiorPosicaoVerticeRelacionado)
+                        posicoes[i].MaiorPosicaoVerticeRelacionado = posicaoVerticeRelacionado;
+                }
+            }
+
+            return posicoes;
         }
 
         protected void GravarLogDuranteExecucao(string logString)

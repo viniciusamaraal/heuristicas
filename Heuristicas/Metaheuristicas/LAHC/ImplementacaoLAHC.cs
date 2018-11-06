@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Heuristicas.Metaheuristicas
+namespace Heuristicas.Metaheuristicas.LAHC
 {
-    public class LAHC : MetaHeuristicaBase
+    public class ImplementacaoLAHC : MetaHeuristicaBase
     {
         private int TamanhoMemoria { get; set; }
         private int NumeroMaximoRejeicoesConsecutivas { get; set; }
 
-        public LAHC(string instancia, bool logAtivo, double numeroMaximoRejeicoesConsecutivas, double multiplicadorTamanhoMemoria)
+        public ImplementacaoLAHC(string instancia, bool logAtivo, double numeroMaximoRejeicoesConsecutivas, double multiplicadorTamanhoMemoria)
             :base (instancia, Constantes.HeuristicasImplementadas.LAHC, logAtivo)
         {
             this.NumeroMaximoRejeicoesConsecutivas = (int)(base.NumeroVertices * numeroMaximoRejeicoesConsecutivas); ;

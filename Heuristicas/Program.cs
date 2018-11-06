@@ -1,4 +1,7 @@
 ﻿using Heuristicas.Metaheuristicas;
+using Heuristicas.Metaheuristicas.BuscaTabu;
+using Heuristicas.Metaheuristicas.ILS;
+using Heuristicas.Metaheuristicas.LAHC;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -26,7 +29,7 @@ namespace Heuristicas
 
             // Declaração de variáveis e definição valores default
             var listaInstancias = new List<string>();
-            string heuristica = Constantes.HeuristicasImplementadas.ILS;
+            string heuristica = Constantes.HeuristicasImplementadas.BuscaTabu;
 
             double multiplicadorNumeroMaximoRejeicoesLAHC = 10000;
             double multiplicadorTamanhoMemoriaLAHC = 100;
@@ -71,7 +74,7 @@ namespace Heuristicas
             {
                 //listaInstancias.Add("p50_19_25");
                 //listaInstancias.Add("p64_21_22");
-                listaInstancias.Add("p97_24_26");
+                //listaInstancias.Add("p97_24_26");
 
                 //listaInstancias.Add("p31_18_21");
                 //listaInstancias.Add("p37_18_20");
@@ -89,6 +92,13 @@ namespace Heuristicas
                 //listaInstancias.Add("p97_24_26");
                 //listaInstancias.Add("p98_24_29");
 
+                //listaInstancias.Add("p100_24_34");
+                //listaInstancias.Add("p55_20_24");
+                //listaInstancias.Add("p76_22_30");
+                //listaInstancias.Add("p82_23_24");
+                //listaInstancias.Add("p83_23_24");
+                //listaInstancias.Add("p97_24_26");
+                //listaInstancias.Add("p98_24_29");
 
                 if (!listaInstancias.Any())
                 {
@@ -121,13 +131,13 @@ namespace Heuristicas
                         switch (heuristica)
                         {
                             case Constantes.HeuristicasImplementadas.LAHC:
-                                metaHeuristica = new LAHC(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoRejeicoesLAHC, multiplicadorTamanhoMemoriaLAHC);
+                                metaHeuristica = new ImplementacaoLAHC(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoRejeicoesLAHC, multiplicadorTamanhoMemoriaLAHC);
                                 break;
                             case Constantes.HeuristicasImplementadas.BuscaTabu:
-                                metaHeuristica = new BuscaTabu(listaInstancias[k], execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT, incrementoTamanhoListaTabuBT, moduloIteracaoSemMelhoraIncrementoListaTabu);
+                                metaHeuristica = new ImplementacaoBuscaTabu(listaInstancias[k], execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT, incrementoTamanhoListaTabuBT, moduloIteracaoSemMelhoraIncrementoListaTabu);
                                 break;
                             case Constantes.HeuristicasImplementadas.ILS:
-                                metaHeuristica = new ILS(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoIteracoesSemMelhoraILS, divisorNumeroMaximoIteracoesMesmoNivelILS);
+                                metaHeuristica = new ImplementacaoILS(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoIteracoesSemMelhoraILS, divisorNumeroMaximoIteracoesMesmoNivelILS);
                                 break;
                             default:
                                 throw new Exception("Heurística não implementada.");
@@ -154,24 +164,8 @@ namespace Heuristicas
                 GravarLogGeral(informacoesExecucaoInstancias);
             }
 
-            if (listaInstancias.Count == 1)
-            {
-                if (execucaoDebug)
-                {
-                    Console.SetWindowSize(200, 60);
-                    Console.WriteLine("Instância: " + metaHeuristica.Instancia);
-                    Console.WriteLine("Meta-heurística executada: " + metaHeuristica.NomeHeuristica);
-                    Console.WriteLine($"O valor encontrado para a melhor solução foi { metaHeuristica.FOMenorCutwidthMelhorSolucao }");
-                    Console.WriteLine($"Organização dos componentes: [ | { string.Join(" | ", metaHeuristica.MelhorSolucao) } | ]");
-                    Console.WriteLine($"Chamadas à função objetivo: { metaHeuristica.ContadorChamadasFuncaoObjetivo }");
-
-                    Console.ReadKey();
-                }
-                else
-                {
-                    Console.Write(metaHeuristica.FOMenorCutwidthMelhorSolucao);
-                }
-            }
+            if (!execucaoDebug)
+                Console.Write(metaHeuristica.FOMenorCutwidthMelhorSolucao);
         }
 
         static void GravarLogGeral(Dictionary<string, List<MetaHeuristicaBase>> informacoesExecucaoInstancias)

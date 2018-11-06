@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Heuristicas.Metaheuristicas
+namespace Heuristicas.Metaheuristicas.ILS
 {
-    public class ILS : MetaHeuristicaBase
+    public class ImplementacaoILS : MetaHeuristicaBase
     {
         private int NumeroMaximoIteracoesSemMelhora { get; set; }
         private int NumeroMaximoIteracoesMesmoNivel { get; set; }
 
-        public ILS(string instancia, bool logAtivo, double multiplicadorNumeroMaximoIteracoesSemMelhora, double divisorNumeroMaximoIteracoesMesmoNivel)
+        public ImplementacaoILS(string instancia, bool logAtivo, double multiplicadorNumeroMaximoIteracoesSemMelhora, double divisorNumeroMaximoIteracoesMesmoNivel)
             : base(instancia, Constantes.HeuristicasImplementadas.ILS, logAtivo)
         {
             this.NumeroMaximoIteracoesSemMelhora = (int)(base.NumeroVertices * multiplicadorNumeroMaximoIteracoesSemMelhora);
