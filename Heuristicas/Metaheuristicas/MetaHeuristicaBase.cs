@@ -344,6 +344,71 @@ namespace Heuristicas.Metaheuristicas
             }
         }
 
+        protected Dictionary<string, int> ExecutarFuncaoAvaliacaoMovimentoTroca(List<int> solucao, int pos_i, int pos_j)
+        {
+            var cutwidthGrafoAposAtualizacao = new Dictionary<string, int>(CutwidthGrafo);
+
+            var verticesAdjacentesPosI = new List<int>(Grafo[solucao[pos_i]]);
+            var verticesAdjacentesPosJ = new List<int>(Grafo[solucao[pos_j]]);
+
+            for (int i = 0; i < NumeroVertices; i++)
+            {
+                if (verticesAdjacentesPosI.Contains(solucao[i]))
+                {
+                    if (i < pos_i)
+                    {
+                        for (int j = pos_i; j < pos_j; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                    }
+
+                    if (i > pos_j)
+                    {
+                        for (int j = pos_i; j < pos_j; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+                    }
+
+                    if (i > pos_i && i < pos_j)
+                    {
+                        for (int j = pos_i; j < i; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+
+                        for (int j = i; j < pos_j; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                    }
+
+                    verticesAdjacentesPosI.Remove(solucao[i]);
+                }
+
+                if (verticesAdjacentesPosJ.Contains(solucao[i]))
+                {
+                    if (i > pos_j)
+                    {
+                        for (int j = pos_i; j < pos_j; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                    }
+
+                    if (i < pos_i)
+                    {
+                        for (int j = pos_i; j < pos_j; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+                    }
+
+                    if (i > pos_i && i < pos_j)
+                    {
+                        for (int j = pos_i; j < i; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+
+                        for (int j = i; j < pos_j; j++)
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j +  1}"]--;
+                    }
+
+                    verticesAdjacentesPosJ.Remove(solucao[i]);
+                }
+            }
+
+            return cutwidthGrafoAposAtualizacao;
+        }
+
         protected PosicaoSolucao[] RetornarGrauVerticesPosicoes(List<int> solucao)
         {
             PosicaoSolucao[] posicoes = new PosicaoSolucao[solucao.Count];

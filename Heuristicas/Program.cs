@@ -72,7 +72,7 @@ namespace Heuristicas
             }
             else
             {
-                //listaInstancias.Add("p50_19_25");
+                listaInstancias.Add("p50_19_25");
                 //listaInstancias.Add("p64_21_22");
                 //listaInstancias.Add("p97_24_26");
 
