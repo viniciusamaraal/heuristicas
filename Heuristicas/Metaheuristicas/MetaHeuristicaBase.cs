@@ -140,7 +140,7 @@ namespace Heuristicas.Metaheuristicas
             var listaVerticesNaoInseridos = new List<int>();
 
             int tentativas = 0;
-            while (tentativas < 1000)
+            while (tentativas < 10)
             {
                 solucao = new List<int>(NumeroVertices);
                 for (int i = 1; i <= this.NumeroVertices; i++)
@@ -191,13 +191,13 @@ namespace Heuristicas.Metaheuristicas
                             minCutwidth = cutwidthListaVerticesCandidatos[i];
                             minSomaCutwidth = somaCutwidthListaVerticesCandidatos[i];
                         }
-                            
+
                         if (cutwidthListaVerticesCandidatos[i] > maxCutwidth || (cutwidthListaVerticesCandidatos[i] == minCutwidth && somaCutwidthListaVerticesCandidatos[i] > minSomaCutwidth))
                         {
                             maxCutwidth = cutwidthListaVerticesCandidatos[i];
                             maxSomaCutwidth = somaCutwidthListaVerticesCandidatos[i];
                         }
-                            
+
                         solucao.Remove(verticeCandidato);
                     }
 
@@ -241,7 +241,7 @@ namespace Heuristicas.Metaheuristicas
             int verticeSelecionado = 0, menorGrau = 0, posicaoSelecionada = -1, minCutwidth = int.MaxValue, cutwidthSolucao = 0, menorCutwidthSolucao = int.MaxValue;
 
             List<int> melhorSolucao = null, solucao = new List<int>(NumeroVertices), listaVerticesNaoInseridos = new List<int>(this.NumeroVertices), listaVerticesCandidatos = null, cutwidthListaVerticesCandidatos = null;
-            
+
             int tentativas = 0;
             while (tentativas < 1000)
             {
@@ -399,10 +399,142 @@ namespace Heuristicas.Metaheuristicas
                             cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
 
                         for (int j = i; j < pos_j; j++)
-                            cutwidthGrafoAposAtualizacao[$"{j}_{j +  1}"]--;
+                            cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
                     }
 
                     verticesAdjacentesPosJ.Remove(solucao[i]);
+                }
+            }
+
+            return cutwidthGrafoAposAtualizacao;
+        }
+
+
+        // NÃO ESTÁ PRONTO
+        protected Dictionary<string, int> ExecutarFuncaoAvaliacaoMovimentoInsercao(List<int> solucao, int posicaoAntiga, int posicaoNova)
+        {
+            var cutwidthGrafoAposAtualizacao = new Dictionary<string, int>(CutwidthGrafo);
+
+            var verticesAdjacentesPosicaoAntiga = new List<int>(Grafo[solucao[posicaoAntiga]]);
+
+            int indiceInicioAfetados = 0, indiceFimAfetados = 0;
+            if (posicaoAntiga < posicaoNova)
+            {
+                indiceInicioAfetados = posicaoAntiga + 1;
+                indiceFimAfetados = posicaoNova;
+            }
+            else
+            {
+                indiceInicioAfetados = posicaoNova;
+                indiceFimAfetados = posicaoAntiga - 1;
+            }
+
+            for (int i = 0; i < NumeroVertices; i++)
+            {
+                if (i != posicaoAntiga)
+                {
+                    if (verticesAdjacentesPosicaoAntiga.Contains(solucao[i]))
+                    {
+                        // arestas que irão AUMENTAR o cutwidth para outros vértices
+                        if (posicaoAntiga < posicaoNova)
+                        {
+                            if (i < posicaoAntiga)
+                            {
+                                for (int j = posicaoAntiga; j < posicaoNova; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+                            }
+
+                            if (i > posicaoNova)
+                            {
+                                for (int j = posicaoAntiga; j < posicaoNova; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                            }
+
+                            if (i > posicaoAntiga && i < posicaoNova)
+                            {
+                                for (int j = posicaoAntiga; j < i; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+
+                                for (int j = i; j < posicaoNova; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                            }
+                            
+                        }
+                        else 
+                        {
+                            if (i < posicaoNova)
+                            {
+                                for (int j = posicaoNova; j < posicaoAntiga; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+                            }
+
+                            if (i > posicaoAntiga)
+                            {
+                                for (int j = posicaoNova; j < posicaoAntiga; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                            }
+
+                            if (i > posicaoNova && i < posicaoAntiga)
+                            {
+                                for (int j = posicaoAntiga; j < i; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+
+                                for (int j = i; j < posicaoNova; j++)
+                                    cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]--;
+                            }
+                        }
+                    }
+
+                    // demais vértices relacionaods aos vértices afetados
+                    if (i < indiceInicioAfetados || i > indiceFimAfetados)
+                    {
+                        for (int j = indiceInicioAfetados; j < indiceFimAfetados; j++)
+                        {
+                            if (Grafo[solucao[i]].Contains(solucao[j]))
+                            {
+                                if (posicaoAntiga < posicaoNova) // arastando para a esquerda
+                                {
+                                    if (i < j)
+                                        cutwidthGrafoAposAtualizacao[$"{j - 2}_{j - 1}"]--;
+                                    else
+                                        cutwidthGrafoAposAtualizacao[$"{j - 2}_{j - 1}"]++;
+                                }
+                                else // arrastando para a direita
+                                {
+                                    if (i < j)
+                                        cutwidthGrafoAposAtualizacao[$"{j - 1}_{j}"]++;
+                                    else
+                                        cutwidthGrafoAposAtualizacao[$"{j - 1}_{j}"]--;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // vértices afetados com relacionamento entre si
+            for (int i = indiceInicioAfetados; i < indiceFimAfetados - 1; i++)
+            {
+                var listaAdjacentesAfetados = Grafo[solucao[i]];
+
+                for (int j = indiceInicioAfetados + 1; j < indiceFimAfetados; j++)
+                {
+                    if (i != j)
+                    {
+                        if (listaAdjacentesAfetados.Contains(solucao[j]))
+                        {
+                            if (posicaoAntiga < posicaoNova) // arrastando para a esquerda
+                            {
+                                cutwidthGrafoAposAtualizacao[$"{i - 1}_{i}"]++;
+                                cutwidthGrafoAposAtualizacao[$"{j - 1}_{j}"]--;
+                            }
+                            else // arrastando para a direita
+                            {
+                                cutwidthGrafoAposAtualizacao[$"{i}_{i + 1}"]--;
+                                cutwidthGrafoAposAtualizacao[$"{j}_{j + 1}"]++;
+                            }
+                        }
+                    }
                 }
             }
 

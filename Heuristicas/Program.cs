@@ -22,8 +22,8 @@ namespace Heuristicas
         {
             bool execucaoDebug = true;
 
-            int quantidadeExcecucoes = 10;
-            int quantidadeExecucoesSimultaneas = 4;
+            int quantidadeExcecucoes = 5;
+            int quantidadeExecucoesSimultaneas = 2;
             execucaoDebug = quantidadeExecucoesSimultaneas > 1 ? false : execucaoDebug;
             var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
 
@@ -34,10 +34,10 @@ namespace Heuristicas
             double multiplicadorNumeroMaximoRejeicoesLAHC = 10000;
             double multiplicadorTamanhoMemoriaLAHC = 100;
 
-            double multiplicadorIteracoesSemMelhoraBT = 100; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesSemMelhoraBT = 200; // multiplicado pelo número de vértices do grafo
             double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
             int incrementoTamanhoListaTabuBT = 1;
-            int moduloIteracaoSemMelhoraIncrementoListaTabu = 50;
+            int moduloIteracaoSemMelhoraIncrementoListaTabu = 10;
 
             double multiplicadorNumeroMaximoIteracoesSemMelhoraILS = 50; // multiplicado pelo número de vértices do grafo
             double divisorNumeroMaximoIteracoesMesmoNivelILS = 5; // dividido pelo número máximo aceitável de execuções sem melhora
@@ -72,7 +72,7 @@ namespace Heuristicas
             }
             else
             {
-                listaInstancias.Add("p50_19_25");
+                //listaInstancias.Add("p50_19_25");
                 //listaInstancias.Add("p64_21_22");
                 //listaInstancias.Add("p97_24_26");
 
@@ -99,6 +99,19 @@ namespace Heuristicas
                 //listaInstancias.Add("p83_23_24");
                 //listaInstancias.Add("p97_24_26");
                 //listaInstancias.Add("p98_24_29");
+
+                listaInstancias.Add("ash85.mtx.rnd");
+                listaInstancias.Add("bcsstk01.mtx.rnd");
+                //listaInstancias.Add("bcsstk02.mtx.rnd");
+                listaInstancias.Add("bcspwr01.mtx.rnd");
+                listaInstancias.Add("bcspwr02.mtx.rnd");
+                listaInstancias.Add("ibm32.mtx.rnd");
+                listaInstancias.Add("curtis54.mtx.rnd");
+                listaInstancias.Add("impcol_b.mtx.rnd");
+                //listaInstancias.Add("nos4.mtx.rnd");
+                listaInstancias.Add("pores_1.mtx.rnd ");
+                listaInstancias.Add("steam3.mtx.rnd");
+                listaInstancias.Add("will57.mtx.rnd");
 
                 if (!listaInstancias.Any())
                 {
@@ -159,9 +172,9 @@ namespace Heuristicas
                         tarefas = null;
                         await Task.WhenAll(tarefasNovo);
                     }
-                }
 
-                GravarLogGeral(informacoesExecucaoInstancias);
+                    GravarLogGeral(informacoesExecucaoInstancias);
+                }
             }
 
             if (!execucaoDebug)
