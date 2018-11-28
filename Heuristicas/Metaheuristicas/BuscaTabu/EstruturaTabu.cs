@@ -9,15 +9,19 @@ namespace Heuristicas.Metaheuristicas.BuscaTabu
     public class EstruturaTabu
     {
         private int IncrementoTamanhoListaTabu { get; set; }
+        public int QuantidadeIteracoesProibicao { get; set; }
         private int QuantidadeIteracoesProibicaoOriginal { get; set; }
-        private int QuantidadeIteracoesPriobicao { get; set; }
+        private int QuantidadeMaximaIteracoesProibicao { get; set; }
+        private int QuantidadeMaximaIteracoesProibicaoOriginal { get; set; }
         private RestricaoTabu[,] ListaRestricoes { get; set; }
 
-        public EstruturaTabu(int dimensao, int qtdIteracoesProibicao, int incrementoTamanhoListaTabu)
+        public EstruturaTabu(int dimensao, int qtdIteracoesProibicao, int qtdMaximaIteracoesProibicao, int incrementoTamanhoListaTabu)
         {
             this.IncrementoTamanhoListaTabu = incrementoTamanhoListaTabu;
+            this.QuantidadeIteracoesProibicao = qtdIteracoesProibicao;
             this.QuantidadeIteracoesProibicaoOriginal = qtdIteracoesProibicao;
-            this.QuantidadeIteracoesPriobicao = qtdIteracoesProibicao;
+            this.QuantidadeMaximaIteracoesProibicao = qtdMaximaIteracoesProibicao;
+            this.QuantidadeMaximaIteracoesProibicaoOriginal = qtdMaximaIteracoesProibicao;
 
             ListaRestricoes = new RestricaoTabu[dimensao, dimensao];
 
@@ -32,28 +36,36 @@ namespace Heuristicas.Metaheuristicas.BuscaTabu
 
         public void IncrementarTamanhoLista()
         {
-            this.QuantidadeIteracoesPriobicao += this.IncrementoTamanhoListaTabu;
+            if (this.QuantidadeIteracoesProibicao < this.QuantidadeMaximaIteracoesProibicao)
+                this.QuantidadeIteracoesProibicao += this.IncrementoTamanhoListaTabu;
+        }
+
+        public void DecrementarTamanhoLista()
+        {
+            if (this.QuantidadeIteracoesProibicao > this.QuantidadeIteracoesProibicaoOriginal)
+                this.QuantidadeIteracoesProibicao--;
         }
 
         public void ResetarTamanhoLista()
         {
-            this.QuantidadeIteracoesPriobicao = this.QuantidadeIteracoesProibicaoOriginal;
+            this.QuantidadeIteracoesProibicao = this.QuantidadeIteracoesProibicaoOriginal;
+            this.QuantidadeMaximaIteracoesProibicao = this.QuantidadeMaximaIteracoesProibicaoOriginal;
         }
 
         public void DefinirTabu(int i, int j, int iteracaoProibicao)
         {
-            ListaRestricoes[i, j].IteracaoProibicao = iteracaoProibicao + this.QuantidadeIteracoesPriobicao;
-            ListaRestricoes[i, j].QuantidadeIteracoesProibicao += this.QuantidadeIteracoesPriobicao;
+            ListaRestricoes[i, j].IteracaoProibicao = iteracaoProibicao + this.QuantidadeIteracoesProibicao;
+            ListaRestricoes[i, j].QuantidadeIteracoesProibicao += this.QuantidadeIteracoesProibicao;
             ListaRestricoes[i, j].Visitas.Add(iteracaoProibicao);
 
-            ListaRestricoes[j, i].IteracaoProibicao = iteracaoProibicao + this.QuantidadeIteracoesPriobicao;
-            ListaRestricoes[j, i].QuantidadeIteracoesProibicao += this.QuantidadeIteracoesPriobicao;
+            ListaRestricoes[j, i].IteracaoProibicao = iteracaoProibicao + this.QuantidadeIteracoesProibicao;
+            ListaRestricoes[j, i].QuantidadeIteracoesProibicao += this.QuantidadeIteracoesProibicao;
             ListaRestricoes[j, i].Visitas.Add(iteracaoProibicao);
         }
 
         public bool ElementoProibido(int i, int j, int iteracaoAtual)
         {
-            return ListaRestricoes[i, j].IteracaoProibicao >= iteracaoAtual;
+            return ListaRestricoes[i, j].IteracaoProibicao >= iteracaoAtual || ListaRestricoes[j, i].IteracaoProibicao >= iteracaoAtual;
         }
 
         public int QuantidadeTrocas(int i, int j)

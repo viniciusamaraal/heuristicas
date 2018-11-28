@@ -18,10 +18,10 @@ namespace Heuristicas.Metaheuristicas.ILS
             this.NumeroMaximoIteracoesMesmoNivel = (int)(this.NumeroMaximoIteracoesSemMelhora / divisorNumeroMaximoIteracoesMesmoNivel);
         }
 
-        public override Task ExecutarMetaheuristica()
+        public override void ExecutarMetaheuristica()
         {
-            return Task.Factory.StartNew(() =>
-            {
+            //return Task.Factory.StartNew(() =>
+            //{
                 int iterAtual = 1, melhorIter = 0, nivelAtual = 1, iterMesmoNivel = 1, foMenorCutwidthSolucaoAtual = 0, foMenorSomaCutwidthSolucaoAtual = 0, foMenorCutwidthSolucaoPerturbadaAposDescida = 0, foMenorSomaCutwidthSolucaoPerturbadaAposDescida;
                 List<int> solucaoPerturbada;
 
@@ -74,7 +74,7 @@ namespace Heuristicas.Metaheuristicas.ILS
                 GravarLogDuranteExecucao($"\n\nMelhorias solução global: {string.Join(" | ", base.IteracoesMelhoraSolucaoGlobal) }");
                 GravarLogDuranteExecucao($"Cutdwidth: { base.FOMenorCutwidthMelhorSolucao }");
                 GravarLogDuranteExecucao($"Solução Final: {  string.Join(" | ", MelhorSolucao.Select(x => x.ToString().PadLeft(2, '0'))) }");
-            });
+            //});
         }
 
         private List<int> PerturbarVetor(List<int> solucaoAtual, int nivelAtual)

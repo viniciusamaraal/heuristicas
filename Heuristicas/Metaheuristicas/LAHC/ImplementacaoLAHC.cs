@@ -50,10 +50,10 @@ namespace Heuristicas.Metaheuristicas.LAHC
             return solucaoVizinha;
         }
 
-        public override Task ExecutarMetaheuristica()
+        public override void ExecutarMetaheuristica()
         {
-            return Task.Factory.StartNew(() =>
-            {
+            //return Task.Factory.StartNew(() =>
+            //{
                 var solucaoAtual = GerarSolucaoAleatoria(); // new int[] { 3, 1, 4, 5, 2, 6 }; // 
 
                 ExecutarFuncaoAvaliacao(solucaoAtual);
@@ -94,7 +94,7 @@ namespace Heuristicas.Metaheuristicas.LAHC
                     controleMemoria = (controleMemoria + 1) % (this.TamanhoMemoria - 1);
                     numeroRejeicoes++;
                 }
-            });
+            //});
         }
     }
 }

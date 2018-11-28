@@ -20,10 +20,10 @@ namespace Heuristicas
 
         static async Task Execucao(string[] args)
         {
-            bool execucaoDebug = true;
+            bool execucaoDebug = false;
 
-            int quantidadeExcecucoes = 5;
-            int quantidadeExecucoesSimultaneas = 2;
+            int quantidadeExcecucoes = 10;
+            int quantidadeExecucoesSimultaneas = 1;
             execucaoDebug = quantidadeExecucoesSimultaneas > 1 ? false : execucaoDebug;
             var informacoesExecucaoInstancias = new Dictionary<string, List<MetaHeuristicaBase>>();
 
@@ -35,9 +35,9 @@ namespace Heuristicas
             double multiplicadorTamanhoMemoriaLAHC = 100;
 
             double multiplicadorIteracoesSemMelhoraBT = 200; // multiplicado pelo número de vértices do grafo
-            double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
-            int incrementoTamanhoListaTabuBT = 1;
-            int moduloIteracaoSemMelhoraIncrementoListaTabu = 10;
+            double multiplicadorIteracoesProibicaoListaBT = 0.2; // multiplicado pelo número de vértices do grafo
+            double multiplicadorMaximoIteracoesProibicaoListaBT = 2.5; // valor proporcional somado ao número máximo de iterações (o tamanho máximo da lista não pode ser maior que o [número de vértices * multiplicadorIteracoesSemMelhoraBT] / moduloIteracaoSemMelhoraIncrementoListaTabu]
+            int moduloIteracaoSemMelhoraIncrementoListaTabu = 30;
 
             double multiplicadorNumeroMaximoIteracoesSemMelhoraILS = 50; // multiplicado pelo número de vértices do grafo
             double divisorNumeroMaximoIteracoesMesmoNivelILS = 5; // dividido pelo número máximo aceitável de execuções sem melhora
@@ -47,22 +47,36 @@ namespace Heuristicas
             // Caso a execução tenha sido chamada via linha de comando, recupera os parâmetros enviados
             if (args.Length > 0)
             {
-                listaInstancias.Add(args[0]);
-                heuristica = args[1];
+                int inicioNomeInstancia = args[1].LastIndexOf("/") + 1;
+                int fimNomeInstancia = args[1].Length - inicioNomeInstancia;
+
+                listaInstancias.Add(args[1].Substring(inicioNomeInstancia, fimNomeInstancia));
+                if (args[2].Equals("--algoritmo"))
+                    heuristica = args[3];
 
                 switch (heuristica)
                 {
                     case Constantes.HeuristicasImplementadas.LAHC:
-                        multiplicadorTamanhoMemoriaLAHC = double.Parse(args[2]);
-                        multiplicadorNumeroMaximoRejeicoesLAHC = double.Parse(args[3]);
+                        if (args[4].Equals(""))
+                            multiplicadorTamanhoMemoriaLAHC = double.Parse(args[4]);
+                        if (args[6].Equals(""))
+                            multiplicadorNumeroMaximoRejeicoesLAHC = double.Parse(args[6]);
                         break;
                     case Constantes.HeuristicasImplementadas.BuscaTabu:
-                        multiplicadorIteracoesSemMelhoraBT = double.Parse(args[2]);
-                        multiplicadorIteracoesProibicaoListaBT = double.Parse(args[3]);
+                        if (args[4].Equals("--iter_sem_melhora"))
+                            multiplicadorIteracoesSemMelhoraBT = double.Parse(args[5]);
+                        if (args[6].Equals("--iter_proibicao"))
+                            multiplicadorIteracoesProibicaoListaBT = double.Parse(args[7]);
+                        if (args[8].Equals("--iter_proibicao_max"))
+                            multiplicadorMaximoIteracoesProibicaoListaBT = double.Parse(args[9]);
+                        if (args[10].Equals("--mod_incremento_lista"))
+                            moduloIteracaoSemMelhoraIncrementoListaTabu = int.Parse(args[11]);
                         break;
                     case Constantes.HeuristicasImplementadas.ILS:
-                        multiplicadorNumeroMaximoIteracoesSemMelhoraILS = double.Parse(args[2]);
-                        divisorNumeroMaximoIteracoesMesmoNivelILS = double.Parse(args[3]);
+                        if (args[4].Equals(""))
+                            multiplicadorNumeroMaximoIteracoesSemMelhoraILS = double.Parse(args[4]);
+                        if (args[6].Equals(""))
+                            divisorNumeroMaximoIteracoesMesmoNivelILS = double.Parse(args[6]);
                         break;
                     default:
                         throw new Exception("Heurística não implementada.");
@@ -73,45 +87,6 @@ namespace Heuristicas
             else
             {
                 //listaInstancias.Add("p50_19_25");
-                //listaInstancias.Add("p64_21_22");
-                //listaInstancias.Add("p97_24_26");
-
-                //listaInstancias.Add("p31_18_21");
-                //listaInstancias.Add("p37_18_20");
-                //listaInstancias.Add("p50_19_25");
-                //listaInstancias.Add("p58_20_21");
-                //listaInstancias.Add("p64_21_22");
-                //listaInstancias.Add("p67_21_22");
-                //listaInstancias.Add("p82_23_24");
-                //listaInstancias.Add("p86_23_24");
-                //listaInstancias.Add("p97_24_26");
-                //listaInstancias.Add("p98_24_29");
-
-                //listaInstancias.Add("p82_23_24");
-                //listaInstancias.Add("p86_23_24");
-                //listaInstancias.Add("p97_24_26");
-                //listaInstancias.Add("p98_24_29");
-
-                //listaInstancias.Add("p100_24_34");
-                //listaInstancias.Add("p55_20_24");
-                //listaInstancias.Add("p76_22_30");
-                //listaInstancias.Add("p82_23_24");
-                //listaInstancias.Add("p83_23_24");
-                //listaInstancias.Add("p97_24_26");
-                //listaInstancias.Add("p98_24_29");
-
-                listaInstancias.Add("ash85.mtx.rnd");
-                listaInstancias.Add("bcsstk01.mtx.rnd");
-                //listaInstancias.Add("bcsstk02.mtx.rnd");
-                listaInstancias.Add("bcspwr01.mtx.rnd");
-                listaInstancias.Add("bcspwr02.mtx.rnd");
-                listaInstancias.Add("ibm32.mtx.rnd");
-                listaInstancias.Add("curtis54.mtx.rnd");
-                listaInstancias.Add("impcol_b.mtx.rnd");
-                //listaInstancias.Add("nos4.mtx.rnd");
-                listaInstancias.Add("pores_1.mtx.rnd ");
-                listaInstancias.Add("steam3.mtx.rnd");
-                listaInstancias.Add("will57.mtx.rnd");
 
                 if (!listaInstancias.Any())
                 {
@@ -133,7 +108,7 @@ namespace Heuristicas
             {
                 for (int j = 0; j < listaInstancias.Count; j += quantidadeExecucoesSimultaneas)
                 {
-                    var tarefas = new Task[quantidadeExecucoesSimultaneas];
+                    //var tarefas = new Task[quantidadeExecucoesSimultaneas];
 
                     for (int k = j; k < j + quantidadeExecucoesSimultaneas && k < listaInstancias.Count; k++)
                     {
@@ -147,7 +122,7 @@ namespace Heuristicas
                                 metaHeuristica = new ImplementacaoLAHC(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoRejeicoesLAHC, multiplicadorTamanhoMemoriaLAHC);
                                 break;
                             case Constantes.HeuristicasImplementadas.BuscaTabu:
-                                metaHeuristica = new ImplementacaoBuscaTabu(listaInstancias[k], execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT, incrementoTamanhoListaTabuBT, moduloIteracaoSemMelhoraIncrementoListaTabu);
+                                metaHeuristica = new ImplementacaoBuscaTabu(listaInstancias[k], execucaoDebug, multiplicadorIteracoesSemMelhoraBT, multiplicadorIteracoesProibicaoListaBT, multiplicadorMaximoIteracoesProibicaoListaBT, moduloIteracaoSemMelhoraIncrementoListaTabu);
                                 break;
                             case Constantes.HeuristicasImplementadas.ILS:
                                 metaHeuristica = new ImplementacaoILS(listaInstancias[k], execucaoDebug, multiplicadorNumeroMaximoIteracoesSemMelhoraILS, divisorNumeroMaximoIteracoesMesmoNivelILS);
@@ -158,20 +133,21 @@ namespace Heuristicas
 
                         informacoesExecucaoInstancias[listaInstancias[k]].Add(metaHeuristica);
 
-                        tarefas[k - j] = metaHeuristica.ExecutarMetaheuristica();
+                        //tarefas[k - j] = metaHeuristica.ExecutarMetaheuristica();
+                        metaHeuristica.ExecutarMetaheuristica();
                     }
 
-                    int qtdTarefasProcessarAgora = tarefas.Where(x => x != null).Count();
+                    //int qtdTarefasProcessarAgora = tarefas.Where(x => x != null).Count();
 
-                    if (qtdTarefasProcessarAgora == tarefas.Length)
-                        await Task.WhenAll(tarefas);
-                    else
-                    {
-                        // Caso o número de tarefas a processar não seja múltiplo do número de tarefas executadas simultaneamente...
-                        var tarefasNovo = tarefas.Where(x => x != null).ToArray();
-                        tarefas = null;
-                        await Task.WhenAll(tarefasNovo);
-                    }
+                    //if (qtdTarefasProcessarAgora == tarefas.Length)
+                    //    await Task.WhenAll(tarefas);
+                    //else
+                    //{
+                    //    // Caso o número de tarefas a processar não seja múltiplo do número de tarefas executadas simultaneamente...
+                    //    var tarefasNovo = tarefas.Where(x => x != null).ToArray();
+                    //    tarefas = null;
+                    //    await Task.WhenAll(tarefasNovo);
+                    //}
 
                     GravarLogGeral(informacoesExecucaoInstancias);
                 }
@@ -179,6 +155,7 @@ namespace Heuristicas
 
             if (!execucaoDebug)
                 Console.Write(metaHeuristica.FOMenorCutwidthMelhorSolucao);
+            //Console.ReadKey();
         }
 
         static void GravarLogGeral(Dictionary<string, List<MetaHeuristicaBase>> informacoesExecucaoInstancias)
