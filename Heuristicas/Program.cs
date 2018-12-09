@@ -34,8 +34,8 @@ namespace Heuristicas
             double multiplicadorNumeroMaximoRejeicoesLAHC = 10000;
             double multiplicadorTamanhoMemoriaLAHC = 100;
 
-            double multiplicadorIteracoesSemMelhoraBT = 200; // multiplicado pelo número de vértices do grafo
-            double multiplicadorIteracoesProibicaoListaBT = 0.2; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesSemMelhoraBT = 100; // multiplicado pelo número de vértices do grafo
+            double multiplicadorIteracoesProibicaoListaBT = 0.5; // multiplicado pelo número de vértices do grafo
             double multiplicadorMaximoIteracoesProibicaoListaBT = 2.5; // valor proporcional somado ao número máximo de iterações (o tamanho máximo da lista não pode ser maior que o [número de vértices * multiplicadorIteracoesSemMelhoraBT] / moduloIteracaoSemMelhoraIncrementoListaTabu]
             int moduloIteracaoSemMelhoraIncrementoListaTabu = 30;
 
